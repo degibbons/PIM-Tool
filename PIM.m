@@ -3,14 +3,16 @@
 % Made to visualize and manipulate pressure plate data in .txt format.
 % Refer to included instruction manual for operational help.
 
-clear;
 clear global;
+clear;
 close force all;
-% There are 5 global variables for housing data structures and variables to
+% There are 6 global variables for housing data structures and variables to
 % be passed around by functions and buttons.
 % S is the structure that houses the buttons, checkboxes, and the whole of
 % the Image Tool figure. It is mainly used for the states of check boxes
 % and buttons.
+% R is the structure designated specifically for the draw tool options box 
+% and its buttons.
 % D is the structure which houses only the main data matrix. It contains no
 % other data, existing purely for any future flexibility needed in passing
 % more desired data.
@@ -20,257 +22,259 @@ close force all;
 % data matrix, the weight text, center of pressure  mapping, etc.
 % HB is the structure which houses all of the help box components.
 global S;
-%% Initialize the buttons, check boxes, edit boxes, and text display in a single global variable S
+%% Image Controller Initialization
 S.fh = figure('Units','Pixels','Position',[10 100 500 600],...
-    'Name','Image Controller','MenuBar','None','Resize','off');
+    'Name','Image Controller','MenuBar','None','Resize','off'); % Create Image Controller Figure
 
 % Title and Version Number
-figure(S.fh)
+figure(S.fh) % Shift Focuse to Image Controller Figure
 S.tx(1) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fh,'Color'),...
     'Position',[175 520 150 60],'Fontsize',19,'String',{'P.I.M. Tool','---------------'},...
-    'Fontweight','bold');
+    'Fontweight','bold'); % Title
 S.tx(13) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fh,'Color'),...
-    'Position',[290 480 55 40],'Fontsize',12,'String','v1.01');
-S.an2 = annotation('rectangle',[0.33 0.85 0.33 0.12]);
+    'Position',[290 480 55 40],'Fontsize',12,'String','v1.02'); % Version Number
+S.an2 = annotation('rectangle',[0.33 0.85 0.33 0.12]); % Box Around Title
 
 % Data Extract and Visualization Section
 S.tx(10) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fh,'Color'),...
     'Position',[5 450 485 20],'Fontsize',10,'String',...
-    '_____________________________________________________________');
+    '_____________________________________________________________'); % Section Separator
 S.tx(8) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fh,'Color'),...
     'Position',[150 443 210 20],'Fontsize',10,'String',...
-    'Data Extraction and Visualization:');
+    'Data Extraction and Visualization:'); % Section Title
 S.pb(1) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [30 360 100 80],'Fontsize',10,'FontWeight','bold','String','Load File');
+    [30 360 100 80],'Fontsize',10,'FontWeight','bold','String','Load File'); % Load File Button
 S.cb(1) = uicontrol('Style','Checkbox','Units','Pixels','Position',...
-    [150 415 150 20],'String','Weight Text','Background',get(S.fh,'Color'),'Enable','inactive');
+    [150 415 150 20],'String','Weight Text','Background',get(S.fh,'Color'),'Enable','inactive'); % Weight Text Checkbox
 S.cb(2) = uicontrol('Style','Checkbox','Units','Pixels','Position',...
-    [150 390 150 20],'String','Center of Pressure','Background',get(S.fh,'Color'),'Enable','inactive');
-S.tx(2) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fh,'Color'),...
-    'Position',[325 390 100 50],'Fontsize',10,'String','Total Number of Frames: ');
-S.tx(3) = uicontrol('Style','Text','Unit','Pixels','Background',[0.5 0.5 0.5],...
-    'Position',[345 375 50 20],'Fontsize',12,'String','000');
-S.pb(2) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [30 260 100 50],'Fontsize',10,'String','Total Force','Enable','inactive');
-S.pb(3) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [30 200 100 50],'Fontsize',10,'String','Peak Pressure','Enable','inactive');
+    [150 390 150 20],'String','Center of Pressure','Background',get(S.fh,'Color'),'Enable','inactive'); % Center of Pressure Checkbox
 S.cb(5) = uicontrol('Style','Checkbox','Units','Pixels','Position',...
     [150 365 150 20],'String','Force/Pressure Graph Track','Background',get(S.fh,'Color'),...
-    'Enable','inactive','Visible','on');
-S.pb(16) = uicontrol('Style','Pushbutton','Units','Pixels','Enable','inactive','Position',...
-    [150 260 100 50],'Fontsize',10,'String','Display MPP');
-S.pb(17) = uicontrol('Style','Pushbutton','Units','Pixels','Enable','inactive','Position',...
-    [150 200 100 50 ],'Fontsize',10,'String','Display MVP');
-S.pb(29) = uicontrol('Style','Pushbutton','Units','Pixels','Enable','inactive','Position',...
-    [30 120 150 50],'Fontsize',10,'String','Show Navigation Tools','callback',{@pb_call_29,S},...
-    'Enable','inactive');
-S.pb(30) = uicontrol('Style','Pushbutton','Units','Pixels','Enable','inactive','Position',...
-    [200 120 200 50],'Fontsize',10,'String','Show Data Manipulation Tools','callback',{@pb_call_30,S},...
-    'Enable','inactive');
-S.pb(31) = uicontrol('Style','Pushbutton','Units','Pixels','Enable','inactive','Position',...
-    [30 60 150 50],'Fontsize',10,'String','Show Data Export Tools','callback',{@pb_call_31,S},...
-    'Enable','inactive');
+    'Enable','inactive','Visible','on'); % Force/Pressure Graph Track Checkbox
+S.tx(2) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fh,'Color'),...
+    'Position',[325 390 100 50],'Fontsize',10,'String','Total Number of Frames: '); % # of frames 
+S.tx(3) = uicontrol('Style','Text','Unit','Pixels','Background',[0.5 0.5 0.5],...
+    'Position',[345 375 50 20],'Fontsize',12,'String','000'); % # of frames
 S.tx(12) = uicontrol('Style','Text','Unit','Pixels','Background',[0.8 0.8 0.8],...
-    'Position',[25 335 450 18],'Fontsize',10,'String',...
-    "File Name: ",'HorizontalAlignment','left','FontWeight','bold');
-
+    'Position',[25 335 450 18],'Fontsize',10,'String',"File Name: ",...
+    'HorizontalAlignment','left','FontWeight','bold'); % Loaded File Name Display
 S.an1 = annotation('line','Units','Pixels');
-S.an1.X = [25 475];
+S.an1.X = [25 475]; % Section Separator
 S.an1.Y = [325 325];
 
+S.pb(2) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
+    [30 260 100 50],'Fontsize',10,'String','Total Force','Enable','inactive'); % Open Total Force Graph
+S.pb(3) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
+    [30 200 100 50],'Fontsize',10,'String','Peak Pressure','Enable','inactive'); % Open Peak Pressure Graph
+S.pb(16) = uicontrol('Style','Pushbutton','Units','Pixels','Enable','inactive','Position',...
+    [150 260 100 50],'Fontsize',10,'String','Display MPP'); % Displays MPP in Visualization Window
+S.pb(17) = uicontrol('Style','Pushbutton','Units','Pixels','Enable','inactive','Position',...
+    [150 200 100 50 ],'Fontsize',10,'String','Display MVP'); % Displays MVP in Visualization Window
 S.an3 = annotation('line','Units','Pixels');
-S.an3.X = [25 475];
+S.an3.X = [25 475]; % Section Separator
 S.an3.Y = [185 185];
 
+S.pb(29) = uicontrol('Style','Pushbutton','Units','Pixels','Enable','inactive','Position',...
+    [30 120 150 50],'Fontsize',10,'String','Show Navigation Tools','callback',{@pb_call_29,S},...
+    'Enable','inactive'); % Opens Navigation Tools Window
+S.pb(30) = uicontrol('Style','Pushbutton','Units','Pixels','Enable','inactive','Position',...
+    [200 120 200 50],'Fontsize',10,'String','Show Data Manipulation Tools','callback',{@pb_call_30,S},...
+    'Enable','inactive'); % Opens Data Manipulation Tools Window
+S.pb(31) = uicontrol('Style','Pushbutton','Units','Pixels','Enable','inactive','Position',...
+    [30 60 150 50],'Fontsize',10,'String','Show Data Export Tools','callback',{@pb_call_31,S},...
+    'Enable','inactive'); % Opens Data Export Tools Window
 S.pb(15) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [400 10 85 30],'Fontsize',10,'String','Help');
+    [400 10 85 30],'Fontsize',10,'String','Help'); % Help button
+
+%% Future Possible Added Functions
 S.pb(23) = uicontrol('Style','Pushbutton','Units','Normalized','Position',...
     [0.10 0.02 0.2 0.05],'Fontsize',10,'String','Reset','visible','off'); % Invisible until functionality is refined
 S.pb(24) = uicontrol('Style','Pushbutton','Units','Normalized','Position',...
     [0.32 0.03 0.3 0.03],'Fontsize',10,'String','Save Session','Visible','off'); % Invisible until functionality is refined
 
-%Navigate Options
+%% Navigation Controller Initialization 
 S.fhNav = figure('Units','Pixels','Position',[540 400 410 250],'Name',...
-    'Data Navigation Controller','MenuBar','None','Resize','off','CloseRequestFcn',@fh_call_1);
-figure(S.fhNav);
+    'Data Navigation Controller','MenuBar','None','Resize','off','CloseRequestFcn',@fh_call_1); % Create Navigation Controller Figure
+figure(S.fhNav); % Shift Focus to Navigation Controller Figure
 S.tx(5) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fhNav,'Color'),...
     'Position',[15 215 385 20],'Fontsize',10,'String',...
-    '_____________________________________________________________');
+    '_____________________________________________________________'); % Section Separator
 S.tx(6) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fhNav,'Color'),...
-    'Position',[165 210 65 20],'Fontsize',10,'String','Navigate:');
+    'Position',[165 210 65 20],'Fontsize',10,'String','Navigate:'); % Section Title
 S.pb(8) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [50 150 50 30],'Fontsize',10,'String','<<','Enable','inactive');
+    [50 150 50 30],'Fontsize',10,'String','<<','Enable','inactive'); % Navigate to First Frame Button
 S.pb(9) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [110 150 50 30],'Fontsize',10,'String','<','Enable','inactive');
+    [110 150 50 30],'Fontsize',10,'String','<','Enable','inactive'); % Decrement Frame Button
 S.ed(1) = uicontrol('Style','Edit','Units','Pixels','Position',...
-    [170 150 50 30],'Fontsize',10,'String','Frame','Enable','inactive');
+    [170 150 50 30],'Fontsize',10,'String','Frame','Enable','inactive'); % Navigate to Desired Frame
 S.pb(10) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [230 150 50 30],'Fontsize',10,'String','>','Enable','inactive');
+    [230 150 50 30],'Fontsize',10,'String','>','Enable','inactive'); % Increment Frame Button
 S.pb(11) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [290 150 50 30],'Fontsize',10,'String','>>','Enable','inactive');
-S.pb(25) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [130 150 150 30],'Fontsize',10,'String','Return to Single Frame','Visible','Off');
+    [290 150 50 30],'Fontsize',10,'String','>>','Enable','inactive'); % Navigate to Last Frame Button
 S.pb(14) = uicontrol('Style','Pushbutton','Units','Pixels','Enable','inactive','Position',...
-    [70 110 90 30],'Fontsize',10,'String','<= Reverse','Interruptible','on');
-S.pb(19) = uicontrol('Style','Pushbutton','Units','Pixels','Enable','inactive','Position',...
-    [230 110 90 30],'Fontsize',10,'String','Forward =>','Interruptible','on');
+    [70 110 90 30],'Fontsize',10,'String','<= Reverse','Interruptible','on'); % Animate Backwards Through Frames Button
 S.pb(26) = uicontrol('Style','Pushbutton','Units','Pixels','Enable','inactive','Position',...
-    [170 110 50 30],'Fontsize',10,'String','Stop');
-S.sl(1) = uicontrol('Style', 'slider', 'Unit','Pixels','position', [100,25,140,25], ...
-    'Min',0.1,'Max',1,'SliderStep',[.05 .05],'Value',0.1,'Enable','inactive');
+    [170 110 50 30],'Fontsize',10,'String','Stop'); % Stop Animation Forwards or Backwards Button
+S.pb(19) = uicontrol('Style','Pushbutton','Units','Pixels','Enable','inactive','Position',...
+    [230 110 90 30],'Fontsize',10,'String','Forward =>','Interruptible','on'); % Animate Forwards Through Frames Button
+
 S.tx(21) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fhNav,'Color'),...
     'Position',[15 75 385 20],'Fontsize',10,'String',...
     '_____________________________________________________________');
 S.tx(17) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fhNav,'Color'),...
     'Position',[115 65 175 25],'Fontsize',10,'String','Play Speed (seconds/frame):');
+S.sl(1) = uicontrol('Style', 'slider', 'Unit','Pixels','position', [100,25,140,25], ...
+    'Min',0.1,'Max',1,'SliderStep',[.05 .05],'Value',0.1,'Enable','inactive'); % Animation Speed Slider
 S.ed(6) = uicontrol('Style','Edit','Unit','Pixels',...
-    'Position',[250 25 50 35],'Fontsize',10,'String','0.100','Enable','inactive');
-set(S.fhNav,'Visible','off');
+    'Position',[250 25 50 35],'Fontsize',10,'String','0.100','Enable','inactive'); % Desired Animation Speed 0.1 - 1.0
 
-% Manipulate Tools Section
+% Return Button Visible when MPP or MVP is Displayed
+S.pb(25) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
+    [130 150 150 30],'Fontsize',10,'String','Return to Single Frame','Visible','Off'); % Return to Single Frame Button
+set(S.fhNav,'Visible','off'); % Make Invisible Until Needed
+
+%% Data Manipulation Controler Initialization
 S.fhMan = figure('Units','Pixels','Position',[550 425 500 300],'Name',...
-    'Data Manipulation Controller','MenuBar','None','Resize','off','CloseRequestFcn',@fh_call_2);
-figure(S.fhMan)
+    'Data Manipulation Controller','MenuBar','None','Resize','off','CloseRequestFcn',@fh_call_2); % Create Data Manipulation Controller Figure
+figure(S.fhMan) % Shift Focus to Data Manipulation Controller Figure
 S.tx(4) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fh,'Color'),...
     'Position',[15 270 475 20],'Fontsize',10,'String',...
-    '_____________________________________________________________');
+    '_____________________________________________________________'); % Section Separator
 S.tx(9) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fh,'Color'),...
     'Position',[175 265 125 20],'Fontsize',10,'String',...
-    'Manipulation Tools:');
+    'Manipulation Tools:'); % Section Title
 S.pb(4) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [140 220 200 40],'Visible','on','Fontsize',10,'String','Draw Area Tool');
+    [140 220 200 40],'Visible','on','Fontsize',10,'String','Draw Area Tool'); % Draw Area Tool Button
 S.pb(20) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [30 175 150 25],'Visible','on','Fontsize',10,'String','Draw Tool Options');
+    [30 175 150 25],'Visible','on','Fontsize',10,'String','Draw Tool Options'); % Open Draw Tool Options Button
 S.pb(21) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [200 175 70 25],'Visible','on','Fontsize',10,'String','Mask');
+    [200 175 70 25],'Visible','on','Fontsize',10,'String','Mask'); % Mask Button
 S.pb(22) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [280 175 70 25],'Visible','on','Fontsize',10,'String','Edit');
+    [280 175 70 25],'Visible','on','Fontsize',10,'String','Edit'); % Edit Button
 S.pu(1) = uicontrol('Style','Popupmenu','Units','Pixels','Position',...
-    [370 164 125 35],'String',{'Entire Figure'},'Visible','on');
+    [370 164 125 35],'String',{'Entire Figure'},'Visible','on'); % Pop-up Menu 
 S.pb(28) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [390 210 70 25],'Visible','on','Fontsize',8,'String','Update','Visible','on');
-S.cb(3) = uicontrol('Style','Checkbox','Units','Pixels','Enable','inactive','Position',...
-    [280 135 200 25],'Visible','on','String','Highlight Previously Masked Area','Background',get(S.fhMan,'Color'));
+    [390 210 70 25],'Visible','on','Fontsize',8,'String','Update','Visible','on'); % Update Pop-up Menu Button
 S.cb(4) = uicontrol('Style','Checkbox','Units','Pixels','Enable','inactive','Position',...
-    [30 135 200 25],'Visible','on','String','Hold CoP Mapping on Frame Change','Background',get(S.fhMan,'Color'));
-S.pb(6) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [30 30 200 30],'Visible','on','Fontsize',10,'String','Calculate Local CoP Data');
+    [30 135 200 25],'Visible','on','String','Hold CoP Mapping on Frame Change','Background',get(S.fhMan,'Color')); % Hold CoP Mapping Checkbox
+S.cb(3) = uicontrol('Style','Checkbox','Units','Pixels','Enable','inactive','Position',...
+    [280 135 200 25],'Visible','on','String','Highlight Previously Masked Area','Background',get(S.fhMan,'Color')); % Highlight Masked Area Checkbox
 S.tx(13) = uicontrol('Style','Text','Units','Pixels','Background',get(S.fhMan,'Color'),...
     'Position',[60 105 40 20],'Visible','on','Fontsize',10,'String','Frame');
-S.tx(14) = uicontrol('Style','Text','Units','Pixels','Background',get(S.fhMan,'Color'),...
+S.tx(14) = uicontrol('Style','Text','Units','Pixels','Background',get(S.fhMan,'Color'),... % Frame Text
     'Position',[20 60 35 35],'Visible','on','Fontsize',10,'String','From');
 S.tx(19) = uicontrol('Style','Text','Units','Pixels','Background',get(S.fhMan,'Color'),...
     'Position',[100 60 35 35],'Visible','on','Fontsize',10,'String','To');
 S.tx(20) = uicontrol('Style','Text','Units','Pixels','Background',get(S.fhMan,'Color'),...
     'Position',[140 105 40 20],'Visible','on','Fontsize',10,'String','Frame');
 S.ed(4) = uicontrol('Style','Edit','Units','Pixels','Position',...
-    [60 70 35 35],'Visible','on','Fontsize',10,'String','B');
+    [60 70 35 35],'Visible','on','Fontsize',10,'String','B'); % Beginning Frame Edit Box
 S.ed(5) = uicontrol('Style','Edit','Units','Pixels','Position',...
-    [140 70 35 35],'Visible','on','Fontsize',10,'String','E');
+    [140 70 35 35],'Visible','on','Fontsize',10,'String','E'); % End Frame Edit Box
+S.pb(6) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
+    [30 30 200 30],'Visible','on','Fontsize',10,'String','Calculate Local CoP Data'); % Calculate Local CoP Data Button
 S.pb(5) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [280 90 200 30 ],'Visible','on','Fontsize',10,'String','Change Selected to Zero');
+    [280 90 200 30 ],'Visible','on','Fontsize',10,'String','Change Selected to Zero'); % Change Select Mask to Zero Button
 S.pb(7) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [280 50 200 30],'Visible','on','Fontsize',10,'String','Recalculate CoP Data');
+    [280 50 200 30],'Visible','on','Fontsize',10,'String','Recalculate CoP Data'); % Recalculate CoP Data Button
 S.pb(32) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [280 10 200 30],'Visible','on','Fontsize',10,'String','Regraph Force/Pressure');
+    [280 10 200 30],'Visible','on','Fontsize',10,'String','Regraph Force/Pressure'); % Regraph Total Force/Peak Pressure Graphs Button
 S.tx(18) = uicontrol('Style','Text','Unit','Pixels','Background',[0.8 0.8 0.8],...
     'Position',[150 100 200 55],'Fontsize',10,'FontWeight','bold','String',...
-    {'Load Data File Before'; 'Navigating and Manipulating Image.'},'ForegroundColor','b','Visible','off');
-set(S.fhMan,'Visible','off');
+    {'Load Data File Before'; 'Navigating and Manipulating Image.'},'ForegroundColor','b','Visible','off'); % Warning Text
+set(S.fhMan,'Visible','off'); % Make Invisible Until Needed
 
-%Export Options
-S.fhExp = figure('Units','Pixels','Position',[560 450 500 300],'Name',...
-    'Data Export Controller','MenuBar','None','Resize','off','CloseRequestFcn',@fh_call_3);
-figure(S.fhExp)
-S.tx(7) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fh,'Color'),...
-    'Position',[15 270 475 20],'Fontsize',10,'String',...
-    '_____________________________________________________________');
-S.tx(11) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fh,'Color'),...
-    'Position',[175 265 105 20],'Fontsize',10,'String',...
-    'Export Options:');
-S.pb(27) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [140 220 200 40],'Fontsize',10,'String','Select Destination Directory');
-S.tx(15) = uicontrol('Style','Text','Unit','Pixels','Background',[0.8 0.8 0.8],...
-    'Position',[30 190 450 20],'Fontsize',10,'String',...
-    "Directory: ",'HorizontalAlignment','left','FontWeight','bold');
-S.pb(18) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [280 75 200 25],'Visible','on','Fontsize',10,'String','Export New CoP Data');
-S.ed(2) = uicontrol('Style','Edit','Units','Pixels','Position',...
-    [280 110 200 25],'Visible','on','Fontsize',10,'String','Desired File Name');
-S.pb(12) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [30 75 200 25],'Visible','on','Fontsize',10,'String','Export Masked CoP Sequence');
-S.ed(3) = uicontrol('Style','Edit','Units','Pixels','Position',...
-    [30 110 200 25],'Visible','on','Fontsize',10,'String','Desired File Name');
-S.pb(13) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [75 20 350 40],'Visible','on','Fontsize',10,'String','Create Clone of CoP Data Relative to Flash LED');
-S.tx(16) = uicontrol('Style','Text','Unit','Pixels','Background',[0.8 0.8 0.8],...
-    'Position',[150 100 200 55],'Fontsize',10,'FontWeight','bold','String',...
-    {'Select Target Destination Directory'; 'before exporting files.'},'ForegroundColor','b','Visible','off');
-set(S.fhExp,'Visible','off');
-
-set(S.pb(1),'callback',{@pb_call_1,S});
-set(S.pb(13),'callback',{@pb_call_13,S}); % Give functionality to the Create Relative Clone button
-set(S.pb(15),'callback',{@Help_Button,S});
-set(S.pb(27),'callback',{@pb_call_27,S});
-set(S.pb(20),'callback',{@pb_call_20,S});
-set(S.pb(23),'callback',{@pb_call_23,S});
-set(S.pb(24),'callback',{@pb_call_24,S});
-set(S.pb(32),'callback',{@pb_call_32,S});
-
-%Draw Tool Options Section
+%% Draw Tool Controller Initialization
 global R;
 R.fh = figure('Units','Pixels','Position',[535 440 500 300],...
-    'Name','Draw Tool Options','MenuBar','None','CloseRequestFcn',@DT_call_2);
+    'Name','Draw Tool Options','MenuBar','None','CloseRequestFcn',@DT_call_2); % Create Draw Tool Options Controller Figure
 R.tx(1) = uicontrol('Style','Text','Unit','Pixels','Background',get(R.fh,'Color'),...
     'Position',[175 225 150 50],'Fontsize',12,'String',...
-    'Draw Tool Options','Fontweight','bold');
+    'Draw Tool Options','Fontweight','bold'); % Section Title
 R.bg = uibuttongroup('Visible','off','Units','Pixels',...
-    'Position',[35 90 200 125]);
+    'Position',[35 90 200 125]); % Initialize Radio Button Group
 R.rb(1) = uicontrol(R.bg,'Style','radiobutton','Units','Pixels',...
     'String','Straight Line','Position',[15 80 90 30],...
-    'HandleVisibility','off');
+    'HandleVisibility','off'); % Straight Line Option
 R.rb(2) = uicontrol(R.bg,'Style','radiobutton',...
     'String','Free Hand','Units','Pixels',...
-    'Position',[15 45 75 30],'HandleVisibility','off');
+    'Position',[15 45 75 30],'HandleVisibility','off'); % Free Hand Option
 R.rb(3) = uicontrol(R.bg,'Style','radiobutton','Units','Pixels',...
     'String','Rectangle','Position',[125 80 75 30],...
-    'HandleVisibility','off');
+    'HandleVisibility','off'); % Rectangle Option
 R.rb(4) = uicontrol(R.bg,'Style','radiobutton','Units','Pixels',...
     'String','Ellipse','Position',[125 45 75 30],...
-    'HandleVisibility','off');
+    'HandleVisibility','off'); % Ellipse Option
 R.rb(5) = uicontrol(R.bg,'Style','radiobutton','Units','Pixels',...
     'String','Point Marker','Position',[70 10 90 30],...
-    'HandleVisibility','off');
-R.bg.Visible = 'on';
+    'HandleVisibility','off'); % Point Marker Option
+R.bg.Visible = 'on'; % Make Button Group visible
 R.cb(1) = uicontrol('Style','Checkbox','Units','Pixels','Position',...
-    [265 190 200 30],'String','Apply Image Boundaries','Background',get(R.fh,'Color'));
+    [265 190 200 30],'String','Apply Image Boundaries','Background',get(R.fh,'Color')); % Apply Image Boundaries Checkbox
 R.pb(4) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
     [255 140 150 30],'String','Select Mask Color','Background',get(R.fh,'Color'),...
-    'callback',{@DT_call_4});
-R.pb(1) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [300 25 100 30],'Fontsize',10,'String','Apply','callback',{@DT_call_1,R});
-R.pb(2) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [80 25 100 30],'Fontsize',10,'String','Cancel','callback',{@DT_call_2,R});
+    'callback',{@DT_call_4}); % Select Mask Color Button
 R.pb(3) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
-    [255 90 150 30],'Fontsize',8,'String','Clear Point Markers','callback',{@DT_call_3,R});
+    [255 90 150 30],'Fontsize',8,'String','Clear Point Markers','callback',{@DT_call_3,R}); % Clear Point Markers Button
 R.cb(2) = uicontrol('Style','Checkbox','Units','Pixels','Position',...
-    [425 90 35 30],'String','Fix','callback',{@DT_call_5,R});
-set(R.fh,'Visible','off');
+    [425 90 35 30],'String','Fix','callback',{@DT_call_5,R}); % Fix Checkbox
+R.pb(2) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
+    [80 25 100 30],'Fontsize',10,'String','Cancel','callback',{@DT_call_2,R}); % Cancel Button
+R.pb(1) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
+    [300 25 100 30],'Fontsize',10,'String','Apply','callback',{@DT_call_1,R}); % Apply Button
+set(R.fh,'Visible','off'); % Make Invisible Until Needed
+
+%% Data Export Controller Initialization
+S.fhExp = figure('Units','Pixels','Position',[560 450 500 300],'Name',...
+    'Data Export Controller','MenuBar','None','Resize','off','CloseRequestFcn',@fh_call_3); % Create Data Export Controller Figure
+figure(S.fhExp) % Shift Focus to Data Export Figure 
+S.tx(7) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fh,'Color'),...
+    'Position',[15 270 475 20],'Fontsize',10,'String',...
+    '_____________________________________________________________'); % Section Separator
+S.tx(11) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fh,'Color'),...
+    'Position',[175 265 105 20],'Fontsize',10,'String',...
+    'Export Options:'); % Section Title
+S.pb(27) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
+    [140 220 200 40],'Fontsize',10,'String','Select Destination Directory'); % Select Destinatio Directory Button
+S.tx(15) = uicontrol('Style','Text','Unit','Pixels','Background',[0.8 0.8 0.8],...
+    'Position',[30 190 450 20],'Fontsize',10,'String',...
+    "Directory: ",'HorizontalAlignment','left','FontWeight','bold'); % Selected Directory Text
+S.ed(3) = uicontrol('Style','Edit','Units','Pixels','Position',...
+    [30 110 200 25],'Visible','on','Fontsize',10,'String','Desired File Name'); % File Name Edit Box for Masked CoP Sequence
+S.pb(12) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
+    [30 75 200 25],'Visible','on','Fontsize',10,'String','Export Masked CoP Sequence'); % Export Masked CoP Sequence Button
+S.ed(2) = uicontrol('Style','Edit','Units','Pixels','Position',...
+    [280 110 200 25],'Visible','on','Fontsize',10,'String','Desired File Name'); % File Name Edit Box for Entire CoP Sequence
+S.pb(18) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
+    [280 75 200 25],'Visible','on','Fontsize',10,'String','Export New CoP Data'); % Export Entire CoP Sequence Button
+S.pb(13) = uicontrol('Style','Pushbutton','Units','Pixels','Position',...
+    [75 20 350 40],'Visible','on','Fontsize',10,'String','Create Clone of CoP Data Relative to Flash LED'); % Create Clone Button
+S.tx(16) = uicontrol('Style','Text','Unit','Pixels','Background',[0.8 0.8 0.8],...
+    'Position',[150 100 200 55],'Fontsize',10,'FontWeight','bold','String',...
+    {'Select Target Destination Directory'; 'before exporting files.'},'ForegroundColor','b','Visible','off'); % Warning Text
+set(S.fhExp,'Visible','off'); % Make Invisible Until Needed
+
+%% Give Functionality to Buttons
+set(S.pb(1),'callback',{@pb_call_1,S}); % Load File Button
+set(S.pb(13),'callback',{@pb_call_13,S}); % Create Clone Button
+set(S.pb(15),'callback',{@Help_Button,S}); % Help Button
+set(S.pb(27),'callback',{@pb_call_27,S}); % Select Destination Directory Button
+set(S.pb(20),'callback',{@pb_call_20,S}); % Draw Tool Options Button
+set(S.pb(23),'callback',{@pb_call_23,S}); % Reset Button
+set(S.pb(24),'callback',{@pb_call_24,S}); % Save Session Button
+set(S.pb(32),'callback',{@pb_call_32,S}); % Regraph Force/Pressure Button
 
 %% This button loads the data file, extracts most of the desired information, and graphs the first frame of data
 function [] = pb_call_1(varargin) % Executes when the Load File button is pressed
-global S;
-global D;
-global A;
-global F;
+global S; global D; global A; global F; % Declare all global variables within function
 [FileName,PathName,~]=uigetfile('*.txt'); % Open a window to select the data text file
-if FileName == 0
+if FileName == 0 % If no file is selected, do nothing
 else
-    cd(PathName);
+    cd(PathName); % Change Directory to location of file
     fid = fopen(FileName); % Open the file
-    fn = get(S.tx(12),'String');
-    FileName = strcat(fn,{'  '},FileName);
-    set(S.tx(12),'String',FileName);
+    fn = get(S.tx(12),'String'); % Get String Name
+    FileName = strcat(fn,{'  '},FileName); % Concatenate File name to 'File Name:' String
+    set(S.tx(12),'String',FileName); % Print File Name on Image Controller
     filecontent = fread(fid); % Read the contents of the file to a variable
     A.frames = readFramelength(filecontent); % Determine the amount of frames
     set(S.tx(3),'String',num2str(A.frames)); % Display the amount of frames on the Image Tool
@@ -283,8 +287,8 @@ else
     matGraph(1); % Graph the first frame from the main data matrix
     A.curDisplay = 1; %1 for Normal Data, 0 for MPP, -1 for MVP
     set(S.ed(1),'String',num2str(A.CurFrameNum)); % Display the current data frame number in the Navigate Edit Box
-    Y_cp = A.CoPmat(:,3);
-    X_cp = A.CoPmat(:,2);
+    Y_cp = A.CoPmat(:,3); % Separate center of pressure X values
+    X_cp = A.CoPmat(:,2); % Separate center of pressure Y values
     set(0, 'currentfigure', F.fig2); % Make sure the heat map is the current figure
     hold on;
     F.CoPline = plot(2*Y_cp,2*X_cp,'color','k','LineWidth',2); % Graph the Center of Pressure pathway on top of the heat map
@@ -294,141 +298,94 @@ else
     set(S.cb(1),'Value',0); % Set Weight Text to undisplayed. This is set to 0 for speed purposes and simplicity
     set(S.cb(2),'Value',1); % Set the Center of Pressure to be visible.
     advanceCoP(A.CoPmat,A.CurFrameNum,F.fig2,1); % Graph the current Center of Pressure of the current frame with a red star
-    set(S.cb(1),'callback',{@cb_call_1,S}); % Give functionality to the rest of the buttons
-    set(S.cb(2),'callback',{@cb_call_2,S});
-    set(S.ed(1),'callback',{@ed_call_1,S});
-    set(S.pb(4),'callback',{@pb_call_4,S});
-    set(S.pb(5),'callback',{@pb_call_5,S});
-    set(S.pb(8),'callback',{@pb_call_8,S});
-    set(S.pb(9),'callback',{@pb_call_9,S});
-    set(S.pb(10),'callback',{@pb_call_10,S});
-    set(S.pb(11),'callback',{@pb_call_11,S});
-    set(S.pb(16),'callback',{@pb_call_16,S});
-    set(S.pb(17),'callback',{@pb_call_17,S});
-    set(F.fig2,'KeyPressFcn',{@fh_kpfcn,S});
-    set(S.pb(14),'callback',{@pb_call_14,S});
-    set(S.pb(19),'callback',{@pb_call_19,S});
-    set(S.pb(26),'callback',{@pb_call_26,S});
-    set(S.sl(1),'callback',{@sl_call_1,S});
-    set(S.sl(1),'value',0.1);
-    set(S.ed(6),'callback',{@ed_call_6,S});
-    set(S.ed(6),'Enable','on');
-    set(S.ed(1),'Enable','on');
-    set(S.tx(18),'Visible','off');
-    set(S.an1,'Visible','on');
-    set(S.pb(4),'Visible','on');
-    set(S.pb(5),'Visible','on');
-    set(S.pb(6),'Visible','on');
-    set(S.pb(7),'Visible','on');
-    set(S.pb(20),'Visible','on');
-    set(S.pb(21),'Visible','on');
-    set(S.pb(22),'Visible','on');
-    set(S.ed(4),'Visible','on');
-    set(S.ed(5),'Visible','on');
-    set(S.tx(13),'Visible','on');
-    set(S.tx(14),'Visible','on');
-    set(S.tx(19),'Visible','on');
-    set(S.tx(20),'Visible','on');
-    set(S.cb(3),'Visible','on');
-    set(S.cb(4),'Visible','on');
-    set(S.cb(1),'Enable','on');
-    set(S.cb(2),'Enable','on');
-    set(S.cb(3),'Enable','on');
-    set(S.pb(2),'Enable','on');
-    set(S.pb(3),'Enable','on');
-    set(S.pb(16),'Enable','on');
-    set(S.pb(17),'Enable','on');
-    set(S.pb(8),'Enable','on');
-    set(S.pb(9),'Enable','on');
-    set(S.pb(10),'Enable','on');
-    set(S.pb(11),'Enable','on');
-    set(S.pb(14),'Enable','on');
-    set(S.pb(19),'Enable','on');
-    set(S.pb(26),'Enable','on');
-    set(S.sl(1),'Enable','on');
-    set(S.pu(1),'Visible','on');
-    set(S.pb(28),'Visible','on');
-    set(S.pb(29),'Enable','on');
-    set(S.pb(30),'Enable','on');
-    set(S.pb(31),'Enable','on');
-    set(S.cb(5),'Enable','on');
-    A.playSpeed = 0.1;
-    A.playState = true;
+    % Give functionality to the rest of the buttons
+    set(S.cb(1),'callback',{@cb_call_1,S}); % Weight Text Checkbox
+    set(S.cb(2),'callback',{@cb_call_2,S}); % Center of Pressure Checkbox
+    set(S.ed(1),'callback',{@ed_call_1,S}); % Desired Frame Edit Box Navigator
+    set(S.pb(4),'callback',{@pb_call_4,S}); % Draw Area Tool Button
+    set(S.pb(5),'callback',{@pb_call_5,S}); % Change Selected to Zero Button
+    set(S.pb(8),'callback',{@pb_call_8,S}); % First Frame Button
+    set(S.pb(9),'callback',{@pb_call_9,S}); % Decrement Button
+    set(S.pb(10),'callback',{@pb_call_10,S}); % Increment Button
+    set(S.pb(11),'callback',{@pb_call_11,S}); % Last Frame Button
+    set(S.pb(16),'callback',{@pb_call_16,S}); % Display MPP Button
+    set(S.pb(17),'callback',{@pb_call_17,S}); % Display MVP Button
+    set(F.fig2,'KeyPressFcn',{@fh_kpfcn,S}); % Set Ability to Navigate Frames with Arrow Keys
+    set(S.pb(14),'callback',{@pb_call_14,S}); % Reverse Animation Button
+    set(S.pb(19),'callback',{@pb_call_19,S}); % Forward Animation Button
+    set(S.pb(26),'callback',{@pb_call_26,S}); % Stop Animation Button
+    set(S.sl(1),'callback',{@sl_call_1,S}); % Play Speed Slider
+    set(S.sl(1),'value',0.1); % Set slider value to 0.1 seconds per frame
+    set(S.ed(6),'callback',{@ed_call_6,S}); % Animation Speed Edit Box
+    set(S.ed(6),'Enable','on'); % Allow Animation Speed Edit Box to be Usable
+    set(S.ed(1),'Enable','on'); % Allow Navigation Frame Edit Box to be Usable
+    set(S.tx(18),'Visible','off'); % Turn Warning Text Off
+    set(S.an1,'Visible','on'); % Set Section Separator to be Visible
+    set(S.pb(4),'Visible','on'); % Set Draw Area Tool to be visible
+    set(S.pb(5),'Visible','on'); % Set Change Selected to Zero Button to be visible
+    set(S.pb(6),'Visible','on'); % Set Calculate Local CoP Data Button to be visible
+    set(S.pb(7),'Visible','on'); % Set Recalculate CoP Data Button to be visible
+    set(S.pb(20),'Visible','on'); % Set Draw Tool Options Button to be visible
+    set(S.pb(21),'Visible','on'); % Set Mask Button to be visible
+    set(S.pb(22),'Visible','on'); % Set Edit Button to be visible
+    set(S.ed(4),'Visible','on'); % Set Beginning Frame Edit Box to be visible
+    set(S.ed(5),'Visible','on'); % Set Ending Frame Edit Box to be visible
+    set(S.tx(13),'Visible','on'); % Set Frame Text visible
+    set(S.tx(14),'Visible','on'); % Set Frame Text visible
+    set(S.tx(19),'Visible','on'); % Set Frame Text visible
+    set(S.tx(20),'Visible','on'); % Set Frame Text visible
+    set(S.cb(3),'Visible','on'); % Set Highlight Previously Masked Area Checkbox visible
+    set(S.cb(4),'Visible','on'); % Set Hold CoP Mapping on Frame Change Checkbox visible
+    set(S.cb(1),'Enable','on'); % Set Weight Text Checkbox to be usable
+    set(S.cb(2),'Enable','on'); % Set Center of Pressure Checkbox to be usable
+    set(S.cb(3),'Enable','on'); % Set Highlight Previously Masked Area Checkbox to be usable
+    set(S.pb(2),'Enable','on'); % Set Total Force Graph Button to be usable
+    set(S.pb(3),'Enable','on'); % Set Peak Pressure Graph Button to be usable
+    set(S.pb(16),'Enable','on'); % Set Display MPP Button to be usable
+    set(S.pb(17),'Enable','on'); % Set Display MVP Button to be usable
+    set(S.pb(8),'Enable','on'); % Set << Button to be usable
+    set(S.pb(9),'Enable','on'); % Set < Button to be usable
+    set(S.pb(10),'Enable','on'); % Set > Button to be usable
+    set(S.pb(11),'Enable','on'); % Set >> Button to be usable
+    set(S.pb(14),'Enable','on'); % Set <= Reverse Button to be usable
+    set(S.pb(19),'Enable','on'); % Set Forward => Button to be usable
+    set(S.pb(26),'Enable','on'); % Set Stop Button to be usable
+    set(S.sl(1),'Enable','on'); % Set Play Speed Slider to be usable
+    set(S.pu(1),'Visible','on'); % Set Pop-up Menu visible
+    set(S.pb(28),'Visible','on'); % Set Update Button visible
+    set(S.pb(29),'Enable','on'); % Set Open Navigation Tools Window Button to be usable
+    set(S.pb(30),'Enable','on'); % Set Open Data Manipulation Tools Window Button to be usable
+    set(S.pb(31),'Enable','on'); % Set Open Data Export Tools Window Button to be usable
+    set(S.cb(5),'Enable','on'); % Set Force/Pressure Graph Track Checkbox to be usable
+    A.playSpeed = 0.1; % Set Default Play Speed to 0.1 seconds per frame
+    A.playState = true; % Set play state to true
     A.copHold = 0;
-    A.copCalced_local = 0;
+    A.copCalced_local = 0; 
     A.newForces = A.CoPmat(:,1);
-    set(S.ed(4),'String','1');
-    set(S.ed(4),'callback',{@ed_call_4,S});
-    set(S.ed(5),'String',num2str(A.frames))
-    set(S.ed(5),'callback',{@ed_call_5,S});
+    set(S.ed(4),'String','1'); % Set Beginning Frame to be 1
+    set(S.ed(4),'callback',{@ed_call_4,S}); % Give callback function to first frame edit box
+    set(S.ed(5),'String',num2str(A.frames)) % Set Ending Frame to be extracted end frame
+    set(S.ed(5),'callback',{@ed_call_5,S}); % Give callback function to last frame edit box
     set(S.pb(12),'callback',{@pb_call_12,S}); % Give functionality to the Export Masked CoP Sequence button
-    set(S.cb(4),'callback',{@cb_call_4,S});
+    set(S.cb(4),'callback',{@cb_call_4,S}); % Give callback function to Hold CoP Mapping on Frame Change Checkbox 
     set(S.pb(18),'callback',{@pb_call_18,S}); % Give functionality to the Export New CoP Data button
-    set(S.pu(1),'callback',{@pu_call_1,S});
-    set(S.pb(28),'callback',{@pb_call_28,S});
+    set(S.pu(1),'callback',{@pu_call_1,S}); % Give callback to Pop-up Menu 
+    set(S.pb(28),'callback',{@pb_call_28,S}); % Give callback to Update Button
+    set(S.cb(5),'callback',{@cb_call_5,S}); % Give callback to Force/Pressure Graph Track Checkbox
     A.polyCoor = {0,0};
-    A.ply = {};
-    A.polygonNum = 0;
-    A.freehandNum = 0;
-    A.rectangleNum = 0;
-    A.ellipseNum = 0;
+    A.ply = {}; % Create empty structure for all drawn shapes
+    A.polygonNum = 0; % Set amount of polygons to zero
+    A.freehandNum = 0; % Set amount of free hands to zero
+    A.rectangleNum = 0; % Set amount of rectangles to zero
+    A.ellipseNum = 0; % Set amount of ellipses to zero
 end
 end
 
-%% This button graphs the Total Force graph in a separate figure
-function [] = pb_call_2(varargin) % Total Force Button
-global A;
-global F;
-try
-    figure(F.tf)
-catch
-    F.tf = figure('CloseRequestFcn',@tfClose_call); % Create a separate figure to draw the graph in
-    A.totForce = A.CoPmat(:,1);
-    F.tfPlot = plot(1:A.frames,A.totForce); % Graph the Total Force across all frames
-    title('Total Force');
-    xlabel('Frame');
-    ylabel('Force [N]');
-end
-end
-
-%% This button graphs the Peak Pressure graph in a separate figure
-function [] = pb_call_3(varargin) % Peak Pressure Button
-global D;
-global A;
-global F;
-try
-    figure(F.pp)
-catch
-    F.pp=figure('CloseRequestFcn',@ppClose_call); % Create a separate figure to draw the graph in
-    A.maxPressures = zeros(1,A.frames);
-    for i = 1:A.frames
-        A.maxPressures(1,i)=max(max(D.data(:,:,i)));
-    end
-    F.ppPlot = plot(1:A.frames,A.maxPressures); % Graph the Peak Pressure across all frames
-    title('Peak Pressure');
-    xlabel('Frame');
-    ylabel('Force [kPa]'); %%N = (0.25*(sum(kPa)))/10
-end
-end
-
-%% These functions hide the corresponding graphs when the x button is hit to close them
-function tfClose_call(varargin)
-global F;
-set(F.tf,'Visible','off')
-end
-
-function ppClose_call(varargin)
-global F;
-set(F.pp,'Visible','off')
-end
 %% Checking this checkbox calculates and applies or hides the weight text numbers to the current graph
 % WARNING! THIS WILL TAKE TIME!!! THE TEXT FUNCTION, WHILE THE BEST OPTION FOR DISPLAYING THE NUMBERS,
 % SLOWS DOWN ALL OTHER PROCESSES CONSIDERABLY!
 function [] = cb_call_1(varargin) % Weight Text check box
-global S;
-global F;
-global A;
-global D;
+global S; global F; global A; global D;
 set(0, 'currentfigure', F.fig2); % Make sure the heat map is the current figure
 hold on;
 [x, y] = meshgrid(1:64,1:95);
@@ -470,9 +427,7 @@ end
 
 %% This check box is used to toggle on and off the visibility of the Center of Pressure line
 function [] = cb_call_2(varargin) % Turn Off/On Center of Pressure Data
-global S;
-global A;
-global F;
+global S; global A; global F;
 if A.curDisplay == 1 && S.cb(2).Value == 1
     advanceCoP(A.CoPmat,A.CurFrameNum,F.fig2,S.cb(2).Value); % Calculate and display Center of Pressure for current frame
 elseif (A.curDisplay == 0 || A.curDisplay == -1) && S.cb(2).Value == 1
@@ -486,18 +441,137 @@ else
 end
 end
 
-%% This function allows for frame navigation using the keyboard arrow keys
-function [] = fh_kpfcn(varargin)
-global F;
-switch varargin{1,2}.Key
-    case 'rightarrow'
-        pb_call_10(varargin)
-        figure(F.fig2);
-    case 'leftarrow'
-        pb_call_9(varargin)
-        figure(F.fig2);
-    otherwise
+%% This deletes the star from the auxiliary graphs when the box is unchecked
+function [] = cb_call_5(varargin)
+global S; global F;
+if get(S.cb(5),'Value')==0
+    try
+        delete(F.curFrame_tf);
+    catch
+    end
+    try
+        delete(F.curFrame_pp);
+    catch
+    end
 end
+end
+
+%% This button graphs the Total Force graph in a separate figure
+function [] = pb_call_2(varargin) % Total Force Button
+global A; global F;
+try
+    figure(F.tf)
+catch
+    F.tf = figure('CloseRequestFcn',@tfClose_call); % Create a separate figure to draw the graph in
+    A.totForce = A.newForces;
+    F.tfPlot = plot(1:A.frames,A.totForce); % Graph the Total Force across all frames
+    title('Total Force');
+    xlabel('Frame');
+    ylabel('Force [N]');
+end
+if ~isfield(F,'pp')
+    F.pp = [];
+end
+end
+
+%% This button graphs the Peak Pressure graph in a separate figure
+function [] = pb_call_3(varargin) % Peak Pressure Button
+global D; global A; global F;
+try
+    figure(F.pp)
+catch
+    F.pp=figure('CloseRequestFcn',@ppClose_call); % Create a separate figure to draw the graph in
+    A.maxPressures = zeros(1,A.frames);
+    for i = 1:A.frames
+        A.maxPressures(1,i)=max(max(D.data(:,:,i)));
+    end
+    F.ppPlot = plot(1:A.frames,A.maxPressures); % Graph the Peak Pressure across all frames
+    title('Peak Pressure');
+    xlabel('Frame');
+    ylabel('Force [kPa]'); %%N = (0.25*(sum(kPa)))/10
+end
+if ~isfield(F,'tf')
+    F.tf = [];
+end
+end
+
+%% These functions hide the corresponding graphs when the x button is hit to close them
+function tfClose_call(varargin)
+global F;
+set(F.tf,'Visible','off')
+end
+
+function ppClose_call(varargin)
+global F;
+set(F.pp,'Visible','off')
+end
+
+%% This button graphs the MPP data
+function [] = pb_call_16(varargin)
+global S; global D; global A; global F;
+set(0, 'currentfigure', F.fig2); % Make sure the heat map is the current figure
+hold on;
+F.h_MPP = imagesc(A.MPPmat(:,:)); % Graphs the MPP data as a heat map on the figure
+A.curDisplay = 0; %1 for Normal Data, 0 for MPP, -1 for MVP
+colormap(jet); % Set the heat map color scheme to 'Jet'
+colorbar; % Display the color bar on the right side of the map
+highestNum = max(max(max(D.data))); % Use the highest pressure of all the frames to
+caxis([0,highestNum]); % determine the highest number displayed by the color bar and make sure
+set(S.cb(1),'Value',0); % the color scheme is consistent across all frames, then uncheck the Weight Text checkbox for speed purposes
+if isfield(F,'hStrings')
+    delete(F.hStrings);
+end
+Y_cp = A.CoPmat(:,3);
+X_cp = A.CoPmat(:,2);
+set(0, 'currentfigure', F.fig2);
+hold on;
+if S.cb(2).Value == 1
+    F.CoPline = plot(2*Y_cp,2*X_cp,'color','k','LineWidth',2); % Graph the Center of Pressure line on top of the heat map
+end
+set(S.pb(11),'Visible','off')
+set(S.pb(10),'Visible','off')
+set(S.pb(9),'Visible','off')
+set(S.pb(8),'Visible','off')
+set(S.ed(1),'Position',[170 110 50 30])
+set(S.pb(25),'Visible','on')
+set(S.pb(25),'callback',{@pb_call_25,S});
+set(S.pb(14),'Visible','off');
+set(S.pb(19),'Visible','off');
+set(S.pb(26),'Visible','off');
+end
+
+%% This button graphs the MVP data
+function [] = pb_call_17(varargin)
+global S; global D; global A; global F;
+set(0, 'currentfigure', F.fig2); % Make sure the heat map is the current figure
+hold on;
+F.h_MVP = imagesc(A.MVPmat(:,:)); % Graphs the MPP data as a heat map on the figure
+A.curDisplay = -1; %1 for Normal Data, 0 for MPP, -1 for MVP
+colormap(jet); % Set the heat map color scheme to 'Jet'
+colorbar; % Display the color bar on the right side of the map
+highestNum = max(max(max(D.data))); % Use the highest pressure of all the frames to
+caxis([0,highestNum]); % determine the highest number displayed by the color bar and make sure
+set(S.cb(1),'Value',0); % the color scheme is consistent across all frames, then uncheck the Weight Text checkbox for speed purposes
+if isfield(F,'hStrings')
+    delete(F.hStrings);
+end
+Y_cp = A.CoPmat(:,3);
+X_cp = A.CoPmat(:,2);
+set(0, 'currentfigure', F.fig2);
+hold on;
+if S.cb(2).Value == 1
+    F.CoPline = plot(2*Y_cp,2*X_cp,'color','k','LineWidth',2); % Graph the Center of Pressure line on top of the heat map
+end
+set(S.pb(11),'Visible','off')
+set(S.pb(10),'Visible','off')
+set(S.pb(9),'Visible','off')
+set(S.pb(8),'Visible','off')
+set(S.ed(1),'Position',[170 110 50 30])
+set(S.pb(25),'Visible','on')
+set(S.pb(25),'callback',{@pb_call_25,S});
+set(S.pb(14),'Visible','off');
+set(S.pb(19),'Visible','off');
+set(S.pb(26),'Visible','off');
 end
 
 %% These functions make their corresponding windows visible
@@ -531,11 +605,24 @@ function [] = fh_call_3(varargin)
 global S;
 set(S.fhExp,'Visible','off');
 end
+
+%% This function allows for frame navigation using the keyboard arrow keys
+function [] = fh_kpfcn(varargin)
+global F;
+switch varargin{1,2}.Key
+    case 'rightarrow'
+        pb_call_10(varargin)
+        figure(F.fig2);
+    case 'leftarrow'
+        pb_call_9(varargin)
+        figure(F.fig2);
+    otherwise
+end
+end
+
 %% This button is used to jump to the first data frame
 function [] = pb_call_8(varargin)
-global S;
-global A;
-global F;
+global S; global A; global F;
 beep on;
 if A.curDisplay == 1 % Only allow functionality of this button if the normal pressure data (Not MPP or MVP) is currently graphed
     A.CurFrameNum = 1;
@@ -581,55 +668,7 @@ if A.curDisplay == 1 % Only allow functionality of this button if the normal pre
             end
         end
     end
-    if strcmp(get(F.tf,'Visible'),get(F.pp,'Visible'))&& strcmp(get(F.tf,'Visible'),'on')
-        if get(S.cb(5),'Value') == 1
-            figure(F.tf);
-            F.tfPlot = plot(1:A.frames,A.totForce);
-            hold on;
-            try
-                delete(F.curFrame_tf);
-            catch
-            end 
-            F.curFrame_tf = plot(A.CurFrameNum,A.totForce(A.CurFrameNum),'MarkerFaceColor','m',...
-                'Marker','p','MarkerEdgeColor','k','MarkerSize',12);
-            title('Total Force');
-            xlabel('Frame');
-            ylabel('Force [N]');
-            figure(F.pp);
-            F.ppPlot = plot(1:A.frames,A.maxPressures);
-            hold on;
-            try
-                delete(F.curFrame_pp);
-            catch
-            end
-            F.curFrame_pp = plot(A.CurFrameNum,A.maxPressures(A.CurFrameNum),'MarkerFaceColor','m',...
-                'Marker','p','MarkerEdgeColor','k','MarkerSize',12);
-            title('Peak Pressure');
-            xlabel('Frame');
-            ylabel('Force [kPa]');
-            figure(F.fig2);
-        elseif get(S.cb(5),'Value') == 0
-            figure(F.tf);
-            try
-                delete(F.curFrame_tf);
-            catch
-            end
-            F.tfPlot = plot(1:A.frames,A.totForce);
-            title('Total Force');
-            xlabel('Frame');
-            ylabel('Force [N]');
-            figure(F.pp);
-            try
-                delete(F.curFrame_pp);
-            catch
-            end
-            F.ppPlot = plot(1:A.frames,A.maxPressures);
-            title('Peak Pressure');
-            xlabel('Frame');
-            ylabel('Force [kPa]');
-            figure(F.fig2);
-        end
-    end
+    auxGraphDetect;
 else
     beep;
     try
@@ -644,9 +683,7 @@ end
 
 %% This button is used to decrement the desired frame by one and regraph the new data frame
 function [] = pb_call_9(varargin)
-global S;
-global A;
-global F;
+global S; global A; global F;
 beep on;
 if (A.CurFrameNum - 1) >= 1
     if A.curDisplay == 1 % Only allow functionality of this button if the normal pressure data (Not MPP or MVP) is currently graphed
@@ -693,55 +730,7 @@ if (A.CurFrameNum - 1) >= 1
                 end
             end
         end
-        if strcmp(get(F.tf,'Visible'),get(F.pp,'Visible'))&& strcmp(get(F.tf,'Visible'),'on')
-            if get(S.cb(5),'Value') == 1
-                figure(F.tf);
-                F.tfPlot = plot(1:A.frames,A.totForce);
-                hold on;
-                try
-                    delete(F.curFrame_tf);
-                catch
-                end
-                F.curFrame_tf = plot(A.CurFrameNum,A.totForce(A.CurFrameNum),'MarkerFaceColor','m',...
-                    'Marker','p','MarkerEdgeColor','k','MarkerSize',12);
-                title('Total Force');
-                xlabel('Frame');
-                ylabel('Force [N]');
-                figure(F.pp);
-                F.ppPlot = plot(1:A.frames,A.maxPressures);
-                hold on;
-                try
-                    delete(F.curFrame_pp);
-                catch
-                end
-                F.curFrame_pp = plot(A.CurFrameNum,A.maxPressures(A.CurFrameNum),'MarkerFaceColor','m',...
-                    'Marker','p','MarkerEdgeColor','k','MarkerSize',12);
-                title('Peak Pressure');
-                xlabel('Frame');
-                ylabel('Force [kPa]');
-                figure(F.fig2);
-            elseif get(S.cb(5),'Value') == 0
-                figure(F.tf);
-                try
-                    delete(F.curFrame_tf);
-                catch
-                end
-                F.tfPlot = plot(1:A.frames,A.totForce);
-                title('Total Force');
-                xlabel('Frame');
-                ylabel('Force [N]');
-                figure(F.pp);
-                try
-                    delete(F.curFrame_pp);
-                catch
-                end
-                F.ppPlot = plot(1:A.frames,A.maxPressures);
-                title('Peak Pressure');
-                xlabel('Frame');
-                ylabel('Force [kPa]');
-                figure(F.fig2);
-            end
-        end
+        auxGraphDetect;
     else
         beep;
         msgbox({'This button cannot be used with the current graphed data.'; %Pop up warning if used with another graph
@@ -759,11 +748,75 @@ end
 figure(S.fhNav);
 end
 
+%% This edit box is used to jump to the desired input data frame
+function [] = ed_call_1(varargin)
+global S; global A; global F;
+desiredFrame = str2num(char(get(S.ed(1),'String'))); %#ok<ST2NM>
+beep on;
+if isscalar(desiredFrame)
+    if (1 <= desiredFrame) && (desiredFrame<= A.frames)
+        matGraph(desiredFrame); % Change current graphed data to the desired frame
+        A.curDisplay = 1; %1 for Normal Data, 0 for MPP, -1 for MVP
+        set(S.cb(1),'Value',0); % Uncheck and delete Weight Text data for quick operation
+        if isfield(F,'hStrings')
+            delete(F.hStrings);
+        end
+        Y_cp = A.CoPmat(:,3);
+        X_cp = A.CoPmat(:,2);
+        set(0, 'currentfigure', F.fig2);
+        hold on;
+        F.CoPline = plot(2*Y_cp,2*X_cp,'color','k','LineWidth',2); % Graph the Center of Pressure line on top of the heat map
+        advanceCoP(A.CoPmat,A.CurFrameNum,F.fig2,S.cb(2).Value); % Graph the current Center of Pressure with a red star
+        if S.cb(4).Value == 1
+            F.seqCoP = plot(A.CoPsequence(:,3)*2,A.CoPsequence(:,2)*2,'Color','m',...
+                'LineWidth',1.5); % Map the newly calculated center of pressure path within the mask
+            hold on
+            F.selCoP = plot(A.CoPsequence(A.CurFrameNum,3)*2,A.CoPsequence(A.CurFrameNum,2)*2,'MarkerFaceColor','m',...
+                'Marker','h','MarkerEdgeColor','k','MarkerSize',12); % Map the current center of pressure for the points within the selected mask
+        end
+        if get(S.cb(3),'Value') == 1
+            maskList = cellfun(@(x) ~isa(x,'impoint'),A.ply);
+            i = find(maskList);
+            for j = i
+                try
+                    delete(F.pgon{1,j});
+                catch
+                end
+            end
+            
+            set(0, 'currentfigure', F.fig2);
+            drawMask(A.ply,A.polyCoor);
+        elseif get(S.cb(3),'Value') == 0
+            
+            maskList = cellfun(@(x) ~isa(x,'impoint'),A.ply);
+            i = find(maskList);
+            for j = i
+                try
+                    delete(F.pgon{1,j});
+                catch
+                end
+            end
+        end
+        auxGraphDetect;
+    else
+        beep;  % Display when user attempts to move outside frame range
+        F.bounds = msgbox(sprintf('Desired frame is outside the range.\nMake sure your search is between 1 and %i.',A.frames),'Error','error');
+        A.CurFrameNum = 1;
+        set(S.ed(1),'String',A.CurFrameNum)
+    end
+end
+set(S.pb(11),'Visible','on')
+set(S.pb(10),'Visible','on')
+set(S.pb(9),'Visible','on')
+set(S.pb(8),'Visible','on')
+set(S.ed(1),'Position',[170 150 50 30])
+set(S.pb(25),'Visible','off')
+figure(S.fhNav);
+end
+
 %% This button is used to increment the desired frame by one and regraph the new data frame
 function [] = pb_call_10(varargin)
-global S;
-global A;
-global F;
+global S; global A; global F;
 beep on;
 if (A.CurFrameNum + 1) <= A.frames
     if A.curDisplay == 1 % Only allow functionality of this button if the normal pressure data (Not MPP or MVP) is currently graphed
@@ -812,55 +865,7 @@ if (A.CurFrameNum + 1) <= A.frames
                 end
             end
         end
-        if strcmp(get(F.tf,'Visible'),get(F.pp,'Visible'))&& strcmp(get(F.tf,'Visible'),'on')
-            if get(S.cb(5),'Value') == 1
-                figure(F.tf);
-                F.tfPlot = plot(1:A.frames,A.totForce);
-                hold on;
-                try
-                    delete(F.curFrame_tf);
-                catch
-                end
-                F.curFrame_tf = plot(A.CurFrameNum,A.totForce(A.CurFrameNum),'MarkerFaceColor','m',...
-                    'Marker','p','MarkerEdgeColor','k','MarkerSize',12);
-                title('Total Force');
-                xlabel('Frame');
-                ylabel('Force [N]');
-                figure(F.pp);
-                F.ppPlot = plot(1:A.frames,A.maxPressures);
-                hold on;
-                try
-                    delete(F.curFrame_pp);
-                catch
-                end
-                F.curFrame_pp = plot(A.CurFrameNum,A.maxPressures(A.CurFrameNum),'MarkerFaceColor','m',...
-                    'Marker','p','MarkerEdgeColor','k','MarkerSize',12);
-                title('Peak Pressure');
-                xlabel('Frame');
-                ylabel('Force [kPa]');
-                figure(F.fig2);
-            elseif get(S.cb(5),'Value') == 0
-                figure(F.tf);
-                try
-                    delete(F.curFrame_tf);
-                catch
-                end
-                F.tfPlot = plot(1:A.frames,A.totForce);
-                title('Total Force');
-                xlabel('Frame');
-                ylabel('Force [N]');
-                figure(F.pp);
-                try
-                    delete(F.curFrame_pp);
-                catch
-                end
-                F.ppPlot = plot(1:A.frames,A.maxPressures);
-                title('Peak Pressure');
-                xlabel('Frame');
-                ylabel('Force [kPa]');
-                figure(F.fig2);
-            end
-        end
+        auxGraphDetect;
     else
         beep;
         msgbox({'This button cannot be used with the current graphed data.';  % Pop up warning if used with another graph
@@ -880,9 +885,7 @@ end
 
 %% This button is used to jump to the last data frame
 function [] = pb_call_11(varargin)
-global S;
-global A;
-global F;
+global S; global A; global F;
 beep on;
 if A.curDisplay == 1 % Only allow functionality of this button if the normal pressure data (Not MPP or MVP) is currently graphed
     A.CurFrameNum = A.frames;
@@ -927,55 +930,7 @@ if A.curDisplay == 1 % Only allow functionality of this button if the normal pre
             end
         end
     end
-    if strcmp(get(F.tf,'Visible'),get(F.pp,'Visible'))&& strcmp(get(F.tf,'Visible'),'on')
-        if get(S.cb(5),'Value') == 1
-            figure(F.tf);
-            F.tfPlot = plot(1:A.frames,A.totForce);
-            hold on;
-            try
-                delete(F.curFrame_tf);
-            catch
-            end
-            F.curFrame_tf = plot(A.CurFrameNum,A.totForce(A.CurFrameNum),'MarkerFaceColor','m',...
-                'Marker','p','MarkerEdgeColor','k','MarkerSize',12);
-            title('Total Force');
-            xlabel('Frame');
-            ylabel('Force [N]');
-            figure(F.pp);
-            F.ppPlot = plot(1:A.frames,A.maxPressures);
-            hold on;
-            try
-                delete(F.curFrame_pp);
-            catch
-            end
-            F.curFrame_pp = plot(A.CurFrameNum,A.maxPressures(A.CurFrameNum),'MarkerFaceColor','m',...
-                'Marker','p','MarkerEdgeColor','k','MarkerSize',12);
-            title('Peak Pressure');
-            xlabel('Frame');
-            ylabel('Force [kPa]');
-            figure(F.fig2);
-        elseif get(S.cb(5),'Value') == 0
-            figure(F.tf);
-            try
-                delete(F.curFrame_tf);
-            catch
-            end
-            F.tfPlot = plot(1:A.frames,A.totForce);
-            title('Total Force');
-            xlabel('Frame');
-            ylabel('Force [N]');
-            figure(F.pp);
-            try
-                delete(F.curFrame_pp);
-            catch
-            end
-            F.ppPlot = plot(1:A.frames,A.maxPressures);
-            title('Peak Pressure');
-            xlabel('Frame');
-            ylabel('Force [kPa]');
-            figure(F.fig2);
-        end
-    end
+    auxGraphDetect;
 else
     beep;
     try
@@ -988,127 +943,9 @@ end
 figure(S.fhNav);
 end
 
-%% This edit box is used to jump to the desired input data frame
-function [] = ed_call_1(varargin)
-global S;
-global A;
-global F;
-desiredFrame = str2num(char(get(S.ed(1),'String'))); %#ok<ST2NM>
-beep on;
-if isscalar(desiredFrame)
-    if (1 <= desiredFrame) && (desiredFrame<= A.frames)
-        matGraph(desiredFrame); % Change current graphed data to the desired frame
-        A.curDisplay = 1; %1 for Normal Data, 0 for MPP, -1 for MVP
-        set(S.cb(1),'Value',0); % Uncheck and delete Weight Text data for quick operation
-        if isfield(F,'hStrings')
-            delete(F.hStrings);
-        end
-        Y_cp = A.CoPmat(:,3);
-        X_cp = A.CoPmat(:,2);
-        set(0, 'currentfigure', F.fig2);
-        hold on;
-        F.CoPline = plot(2*Y_cp,2*X_cp,'color','k','LineWidth',2); % Graph the Center of Pressure line on top of the heat map
-        advanceCoP(A.CoPmat,A.CurFrameNum,F.fig2,S.cb(2).Value); % Graph the current Center of Pressure with a red star
-        if S.cb(4).Value == 1
-            F.seqCoP = plot(A.CoPsequence(:,3)*2,A.CoPsequence(:,2)*2,'Color','m',...
-                'LineWidth',1.5); % Map the newly calculated center of pressure path within the mask
-            hold on
-            F.selCoP = plot(A.CoPsequence(A.CurFrameNum,3)*2,A.CoPsequence(A.CurFrameNum,2)*2,'MarkerFaceColor','m',...
-                'Marker','h','MarkerEdgeColor','k','MarkerSize',12); % Map the current center of pressure for the points within the selected mask
-        end
-        if get(S.cb(3),'Value') == 1
-            maskList = cellfun(@(x) ~isa(x,'impoint'),A.ply);
-            i = find(maskList);
-            for j = i
-                try
-                    delete(F.pgon{1,j});
-                catch
-                end
-            end
-            
-            set(0, 'currentfigure', F.fig2);
-            drawMask(A.ply,A.polyCoor);
-        elseif get(S.cb(3),'Value') == 0
-            
-            maskList = cellfun(@(x) ~isa(x,'impoint'),A.ply);
-            i = find(maskList);
-            for j = i
-                try
-                    delete(F.pgon{1,j});
-                catch
-                end
-            end
-        end
-        if strcmp(get(F.tf,'Visible'),get(F.pp,'Visible')) && strcmp(get(F.tf,'Visible'),'on')
-            if get(S.cb(5),'Value') == 1
-                figure(F.tf);
-                F.tfPlot = plot(1:A.frames,A.totForce);
-                hold on;
-                try
-                    delete(F.curFrame_tf);
-                catch
-                end
-                F.curFrame_tf = plot(A.CurFrameNum,A.totForce(A.CurFrameNum),'MarkerFaceColor','m',...
-                    'Marker','p','MarkerEdgeColor','k','MarkerSize',12);
-                title('Total Force');
-                xlabel('Frame');
-                ylabel('Force [N]');
-                figure(F.pp);
-                F.ppPlot = plot(1:A.frames,A.maxPressures);
-                hold on;
-                try
-                    delete(F.curFrame_pp);
-                catch
-                end
-                F.curFrame_pp = plot(A.CurFrameNum,A.maxPressures(A.CurFrameNum),'MarkerFaceColor','m',...
-                    'Marker','p','MarkerEdgeColor','k','MarkerSize',12);
-                title('Peak Pressure');
-                xlabel('Frame');
-                ylabel('Force [kPa]');
-                figure(F.fig2);
-            elseif get(S.cb(5),'Value') == 0
-                figure(F.tf);
-                try
-                    delete(F.curFrame_tf);
-                catch
-                end
-                F.tfPlot = plot(1:A.frames,A.totForce);
-                title('Total Force');
-                xlabel('Frame');
-                ylabel('Force [N]');
-                figure(F.pp);
-                try
-                    delete(F.curFrame_pp);
-                catch
-                end
-                F.ppPlot = plot(1:A.frames,A.maxPressures);
-                title('Peak Pressure');
-                xlabel('Frame');
-                ylabel('Force [kPa]');
-                figure(F.fig2);
-            end
-        end
-    else
-        beep;  % Display when user attempts to move outside frame range
-        F.bounds = msgbox(sprintf('Desired frame is outside the range.\nMake sure your search is between 1 and %i.',A.frames),'Error','error');
-        A.CurFrameNum = 1;
-        set(S.ed(1),'String',A.CurFrameNum)
-    end
-end
-set(S.pb(11),'Visible','on')
-set(S.pb(10),'Visible','on')
-set(S.pb(9),'Visible','on')
-set(S.pb(8),'Visible','on')
-set(S.ed(1),'Position',[170 150 50 30])
-set(S.pb(25),'Visible','off')
-figure(S.fhNav);
-end
-
-%% This button plays the frame sequence backward from the current frame to the end frame
+%% This button plays the frame sequence backward from the current frame to the first frame
 function [] = pb_call_14(varargin)
-global S;
-global A;
-global F;
+global S; global A; global F;
 pause('on');
 set(S.cb(1),'Value',0); % Uncheck and delete Weight Text data for quick operation
 if isfield(F,'hStrings')
@@ -1132,9 +969,7 @@ end
 
 %% This button plays the frame sequence forward from the current frame to the end frame
 function [] = pb_call_19(varargin)
-global S;
-global A;
-global F;
+global S; global A; global F;
 pause('on');
 set(S.cb(1),'Value',0); % Uncheck and delete Weight Text data for quick operation
 if isfield(F,'hStrings')
@@ -1152,16 +987,14 @@ end
 
 %% This slider increases and decreases the playback speed
 function [] = sl_call_1(varargin)
-global S;
-global A;
+global S; global A;
 A.playSpeed = get(S.sl(1),'Value');
 set(S.ed(6),'String',num2str(get(S.sl(1),'Value')))
 end
 
 %% This edit box edits the playback speed manually and manipulates the slider
 function [] = ed_call_6(varargin)
-global S;
-global A;
+global S; global A;
 val = str2num(char(get(S.ed(6),'String'))); %#ok<ST2NM>
 if val > 1
     set(S.ed(6),'String','1');
@@ -1172,48 +1005,9 @@ A.playSpeed = str2num(char(get(S.ed(6),'String'))); %#ok<ST2NM>
 set(S.sl(1),'Value',A.playSpeed);
 end
 
-%% This button graphs the MPP data
-function [] = pb_call_16(varargin)
-global S;
-global D;
-global A;
-global F;
-set(0, 'currentfigure', F.fig2); % Make sure the heat map is the current figure
-hold on;
-F.h_MPP = imagesc(A.MPPmat(:,:)); % Graphs the MPP data as a heat map on the figure
-A.curDisplay = 0; %1 for Normal Data, 0 for MPP, -1 for MVP
-colormap(jet); % Set the heat map color scheme to 'Jet'
-colorbar; % Display the color bar on the right side of the map
-highestNum = max(max(max(D.data))); % Use the highest pressure of all the frames to
-caxis([0,highestNum]); % determine the highest number displayed by the color bar and make sure
-set(S.cb(1),'Value',0); % the color scheme is consistent across all frames, then uncheck the Weight Text checkbox for speed purposes
-if isfield(F,'hStrings')
-    delete(F.hStrings);
-end
-Y_cp = A.CoPmat(:,3);
-X_cp = A.CoPmat(:,2);
-set(0, 'currentfigure', F.fig2);
-hold on;
-if S.cb(2).Value == 1
-    F.CoPline = plot(2*Y_cp,2*X_cp,'color','k','LineWidth',2); % Graph the Center of Pressure line on top of the heat map
-end
-set(S.pb(11),'Visible','off')
-set(S.pb(10),'Visible','off')
-set(S.pb(9),'Visible','off')
-set(S.pb(8),'Visible','off')
-set(S.ed(1),'Position',[170 110 50 30])
-set(S.pb(25),'Visible','on')
-set(S.pb(25),'callback',{@pb_call_25,S});
-set(S.pb(14),'Visible','off');
-set(S.pb(19),'Visible','off');
-set(S.pb(26),'Visible','off');
-end
-
 %% This button returns the graph from displaying MPP or MVP to Single Frame Mode
 function [] = pb_call_25(varargin) %Return to Single Frame Button
-global A;
-global S;
-global F;
+global A; global S; global F;
 set(S.pb(11),'Visible','on')
 set(S.pb(10),'Visible','on')
 set(S.pb(9),'Visible','on')
@@ -1279,11 +1073,7 @@ end
 
 %% This tool is used to circle desired data points to create a mask for a variety of uses
 function [] = pb_call_4(varargin) %Draw Area Tool
-global F;
-global R;
-global A;
-global D;
-global S;
+global F; global R; global A; global D; global S;
 set(0, 'currentfigure', F.fig2); % Make sure the heat map is the current figure
 A.drawType = toolEval;
 
@@ -1434,9 +1224,9 @@ try
     elseif isa(A.ply{end},'impoint') && A.drawType == 5 && all(isvalid(A.ply{end}))
         A.ply{1,end} = [A.ply{end}; Preply];
         set(A.ply{end}(end,1),'Visible','off');
-    elseif ~isa(A.ply{end},'impoint') && ptPresent == 1
-        A.ply{1,i} = [A.ply{i}; Preply];
-        set(A.ply{end}(end,1),'Visible','off');
+    elseif ~isa(A.ply{end},'impoint') && ptPresent == 1 && A.drawType == 5
+        A.ply{1,i} = [A.ply{1,i}; Preply];
+        set(A.ply{1,i}(end,1),'Visible','off');
     else
         A.ply = [A.ply , {Preply}];
         if A.drawType == 5
@@ -1478,35 +1268,6 @@ set(S.pb(21),'callback',{@pb_call_21,S});
 set(S.pb(22),'callback',{@pb_call_22,S});
 end
 
-%% Mask and Edit
-function [] = pb_call_21(varargin)
-global A;
-maskList = cellfun(@(x) ~isa(x,'impoint'),A.ply);
-i = find(maskList);
-eval_draw(A.ply,i);
-for j = i
-    if isvalid(A.ply{1,j})
-        set(A.ply{1,j},'Visible','off')
-    end
-end
-end
-
-function [] = pb_call_22(varargin)
-global A;
-maskList = cellfun(@(x) ~isa(x,'impoint'),A.ply);
-for i = 1:length(maskList)
-    if maskList(1,i) == 1
-        if isvalid(A.ply{1,i})
-            set(A.ply{1,i},'Visible','on')
-            old_warning_state = warning('off', 'MATLAB:structOnObject');
-            ply_struct = struct(A.ply{1,i});
-            warning(old_warning_state);
-            uistack(ply_struct.h_group, 'top');
-        end
-    end
-end
-end
-
 %% This button creates a new window where draw options for the Draw Area Tool may be changed
 function [] = pb_call_20(varargin)
 global R;
@@ -1539,8 +1300,7 @@ set(R.fh,'Visible','off');
 end
 
 function [] = DT_call_3(varargin)
-global F;
-global A;
+global F; global A;
 try
     delete(F.refPts);
     maskList = cellfun(@(x) isa(x,'impoint'),A.ply);
@@ -1560,10 +1320,7 @@ A.color = uisetcolor;
 end
 
 function [] = DT_call_5(varargin)
-global A;
-global F;
-global R;
-global S;
+global A; global F; global R; global S;
 ptPresent = 0;
 if  R.cb(2).Value == 1
     for i = 1:length(A.ply)
@@ -1582,6 +1339,8 @@ if  R.cb(2).Value == 1
                 delete(F.refPts);
             end
         end
+        pts = findobj(F.fig2,'Tag','impoint');
+        uistack(pts,'top');
     end
 elseif R.cb(2).Value == 0
     for i = 1:length(A.ply)
@@ -1614,73 +1373,40 @@ elseif R.cb(2).Value == 0
 end
 end
 
-%% These edit boxes are restricted to their proper ranges
-function [] = ed_call_4(varargin)
-global S;
-a = get(S.ed(4),'String');
-a = str2num(char(a)); %#ok<ST2NM>
-if a < 1
-    set(S.ed(4),'String','1');
+%% Mask and Edit
+% Mask the current visible shapes
+function [] = pb_call_21(varargin)
+global A;
+maskList = cellfun(@(x) ~isa(x,'impoint'),A.ply);
+i = find(maskList);
+eval_draw(A.ply,i);
+for j = i
+    if isvalid(A.ply{1,j})
+        set(A.ply{1,j},'Visible','off')
+    end
 end
 end
 
-function [] = ed_call_5(varargin)
-global S;
+% Edit the previously masked shapes
+function [] = pb_call_22(varargin)
 global A;
-b = get(S.ed(5),'String');
-b = str2num(char(b)); %#ok<ST2NM>
-if b > A.frames
-    set(S.ed(5),'String',num2str(A.frames));
-end
-end
-%% This checkbox highlights the previously masked area on the graph for reference purposes
-function [] = cb_call_3(varargin)
-global A;
-global S;
-global F;
-if get(S.cb(3),'Value') == 1
-    set(0, 'currentfigure', F.fig2);
-    try
-        set(F.refPts,'Visible','on');
-    catch
-    end
-    ptPresent = 0;
-    for i = 1:length(A.ply)
-        if isa(A.ply{i},'impoint')
-            if isvalid(A.ply{1,i})
-                ptPresent = 1;
-                break;
-            end
+maskList = cellfun(@(x) ~isa(x,'impoint'),A.ply);
+for i = 1:length(maskList)
+    if maskList(1,i) == 1
+        if isvalid(A.ply{1,i})
+            set(A.ply{1,i},'Visible','on')
+            old_warning_state = warning('off', 'MATLAB:structOnObject');
+            ply_struct = struct(A.ply{1,i});
+            warning(old_warning_state);
+            uistack(ply_struct.h_group, 'top');
         end
-    end
-    if ptPresent == 1
-        for k = 1:length(A.ply{1,i})
-            pos = getPosition(A.ply{1,i}(k,1));
-            A.polyCoor{1,(i*2-1)}(k,1) = pos(1,1);
-            A.polyCoor{1,(i*2)}(k,1) = pos(1,2);
-        end
-    end
-    drawMask(A.ply,A.polyCoor);
-elseif get(S.cb(3),'Value') == 0
-    maskList = cellfun(@(x) ~isa(x,'impoint'),A.ply);
-    i = find(maskList);
-    for j = i
-        try
-            delete(F.pgon{1,j});
-        catch
-        end
-    end
-    try
-        set(F.refPts,'Visible','off')
-    catch
     end
 end
 end
 
 %% This drop down list displays all drawn shapes including the entire figure
 function [] = pu_call_1(varargin)
-global S;
-global A;
+global S; global A;
 list_str = get(S.pu(1),'String');
 list_val = get(S.pu(1),'Value');
 list_len = length(list_str);
@@ -1705,23 +1431,23 @@ if (list_len > 1) && (list_val ~= 1)
             maskType = 'imellipse';
     end
     match_list = {};
-    i = 2;
-    while i <= list_len
-        if isa(A.ply{1,i-1},maskType) && isempty(match_list)
-            if strcmp(maskType,'imrect') && isa(A.ply{1,i-1},'imellipse')
+    i = 1;
+    while i <= length(A.ply)
+        if isa(A.ply{1,i},maskType) && isempty(match_list)
+            if strcmp(maskType,'imrect') && isa(A.ply{1,i},'imellipse')
                 i = i + 1;
                 continue;
             end
-            match_list{1,1} = A.ply{1,i-1};
-        elseif isa(A.ply{1,i-1},maskType) && ~isempty(match_list)
-            if strcmp(maskType,'imrect') && isa(A.ply{1,i-1},'imellipse')
+            match_list{1,1} = A.ply{1,i};
+        elseif isa(A.ply{1,i},maskType) && ~isempty(match_list)
+            if strcmp(maskType,'imrect') && isa(A.ply{1,i},'imellipse')
                 i = i + 1;
                 continue;
             end
-            match_list = [match_list,A.ply(1,i-1)]; %#ok<AGROW>
+            match_list = [match_list,A.ply(1,i)]; %#ok<AGROW>
         end
         if length(match_list) == mask_num
-            setColor(A.ply{1,i-1},'m');
+            setColor(A.ply{1,i},'m');
             break
         end
         i = i + 1;
@@ -1731,10 +1457,7 @@ end
 
 %% Update the drop down list
 function [] = pb_call_28(varargin)
-global S;
-global A;
-% list_str = get(S.pu(1),'String');
-% list_len = length(list_str);
+global S; global A;
 polyNum = 0;
 fhandNum = 0;
 rectNum = 0;
@@ -1793,77 +1516,84 @@ match_list = ['Entire Figure', match_list];
 set(S.pu(1),'String',match_list);
 end
 
-%% This button changes all data points within the previously defined mask on all frames to zero and replots the graph at frame 1
-% NOTE: Excludes MPP and MVP graphs
-function [] = pb_call_5(varargin) % Change Selected To Zero button
+%% This checkbox allows for the newly calculated center of pressure data to remain graphed if the frame is changed
+function [] = cb_call_4(varargin)
+global S; global F;
+if S.cb(4).Value == 1
+    pb_call_6;
+elseif S.cb(4).Value == 0
+    set(0, 'currentfigure', F.fig2);
+    hold on;
+    delete(F.seqCoP)
+    hold on;
+    delete(F.selCoP)
+end
+end
+
+%% This checkbox highlights the previously masked area on the graph for reference purposes
+function [] = cb_call_3(varargin)
+global A; global S; global F;
+if get(S.cb(3),'Value') == 1
+    set(0, 'currentfigure', F.fig2);
+    try
+        set(F.refPts,'Visible','on');
+    catch
+    end
+    ptPresent = 0;
+    for i = 1:length(A.ply)
+        if isa(A.ply{i},'impoint')
+            if isvalid(A.ply{1,i})
+                ptPresent = 1;
+                break;
+            end
+        end
+    end
+    if ptPresent == 1
+        for k = 1:length(A.ply{1,i})
+            pos = getPosition(A.ply{1,i}(k,1));
+            A.polyCoor{1,(i*2-1)}(k,1) = pos(1,1);
+            A.polyCoor{1,(i*2)}(k,1) = pos(1,2);
+        end
+    end
+    drawMask(A.ply,A.polyCoor);
+elseif get(S.cb(3),'Value') == 0
+    maskList = cellfun(@(x) ~isa(x,'impoint'),A.ply);
+    i = find(maskList);
+    for j = i
+        try
+            delete(F.pgon{1,j});
+        catch
+        end
+    end
+    try
+        set(F.refPts,'Visible','off')
+    catch
+    end
+end
+end
+
+%% These edit boxes are restricted to their proper ranges
+function [] = ed_call_4(varargin)
 global S;
-global D;
-global A;
-global F;
-list_str = get(S.pu(1),'String');
-list_val = get(S.pu(1),'Value');
-list_len = length(list_str);
-if list_val ~= 1
-    if (list_len > 1) && (list_val ~= 1)
-        splt = strsplit(char(list_str(list_val)));
-        mask_shape = splt{1,1};
-        mask_num = str2num(splt{1,2}); %#ok<ST2NM>
-        switch mask_shape
-            case 'Polygon'
-                maskType = 'impoly';
-            case 'Rectangle'
-                maskType = 'imrect';
-            case 'Free_Hand'
-                maskType = 'imfreehand';
-            case 'Ellipse'
-                maskType = 'imellipse';
-        end
-        match_list = {};
-        i = 2;
-        while i <= list_len
-            if isa(A.ply{1,i-1},maskType) && isempty(match_list)
-                if strcmp(maskType,'imrect') && isa(A.ply{1,i-1},'imellipse')
-                    i = i + 1;
-                    continue;
-                end
-                match_list{1,1} = A.ply{1,i-1};
-            elseif isa(A.ply{1,i-1},maskType) && ~isempty(match_list)
-                if strcmp(maskType,'imrect') && isa(A.ply{1,i-1},'imellipse')
-                    i = i + 1;
-                    continue;
-                end
-                match_list = [match_list,A.ply(1,i-1)]; %#ok<AGROW>
-            end
-            if length(match_list) == mask_num
-                Premask = A.ply{1,i-1};
-                break
-            end
-            i = i + 1;
-        end
-    end
-    A.BW = createMask(Premask,F.h);
-    newMask = ~A.BW; % Inverts the selected coordinates from 1 to 0 and vice versa
-    A.newForces = zeros(A.frames,1);
-    for i = 1:A.frames
-        D.data(:,:,i) = D.data(:,:,i).*newMask; % Multiplies the actual pressure data by the mask to achieve everything outside the mask
-        A.newForces(i,1) = 0.25 * sum(sum(D.data(:,:,i))) / 10; % Calculate the new forces in Newtons
-    end
-    pb_call_25;
-    set(S.pb(7),'callback',{@pb_call_7,S}); % Give functionality to the Recalculate CoP Data button
-elseif list_val == 1
-    msgbox({'In order to change selected data to zero across the entire data matrix, a mask needs to be selected.';
-        'After changing selected to zero, select "Entire Figure" and hit "Recalculate CoP Data".';% Pop up warning
-        'If you intend to calculate the local  CoP data under a mask, ';
-        'select the desired mask and use the "Calculate Local CoP Data" button.'});
+a = get(S.ed(4),'String');
+a = str2num(char(a)); %#ok<ST2NM>
+if a < 1
+    set(S.ed(4),'String','1');
+end
+end
+
+function [] = ed_call_5(varargin)
+global S; global A;
+b = get(S.ed(5),'String');
+b = str2num(char(b)); %#ok<ST2NM>
+if b > A.frames
+    set(S.ed(5),'String',num2str(A.frames));
 end
 end
 
 %% This button sums the selected pressures in the previously defined mask and marks the center of pressure of the mask
 function [] = pb_call_6(varargin) %Sum Selected Pressures
-global S;
-global D;
-global A;
-global F;
+global S; global D; global A; global F;
 list_str = get(S.pu(1),'String');
 list_val = get(S.pu(1),'Value');
 list_len = length(list_str);
@@ -1954,63 +1684,77 @@ elseif list_val == 1
 end
 end
 
-%% This checkbox allows for the newly calculated center of pressure data to remain graphed if the frame is changed
-function [] = cb_call_4(varargin)
-global S;
-global F;
-if S.cb(4).Value == 1
-elseif S.cb(4).Value == 0
-    set(0, 'currentfigure', F.fig2);
-    hold on;
-    delete(F.seqCoP)
-    hold on;
-    delete(F.selCoP)
+%% This button changes all data points within the previously defined mask on all frames to zero and replots the graph at frame 1
+% NOTE: Excludes MPP and MVP graphs
+function [] = pb_call_5(varargin) % Change Selected To Zero button
+global S; global D; global A; global F;
+list_str = get(S.pu(1),'String');
+list_val = get(S.pu(1),'Value');
+list_len = length(list_str);
+if list_val ~= 1
+    if (list_len > 1) 
+        splt = strsplit(char(list_str(list_val)));
+        mask_shape = splt{1,1};
+        mask_num = str2num(splt{1,2}); %#ok<ST2NM>
+        switch mask_shape
+            case 'Polygon'
+                maskType = 'impoly';
+            case 'Rectangle'
+                maskType = 'imrect';
+            case 'Free_Hand'
+                maskType = 'imfreehand';
+            case 'Ellipse'
+                maskType = 'imellipse';
+        end
+        match_list = {};
+        i = 1;
+        while i <= length(A.ply)
+            if isa(A.ply{1,i},maskType) && isempty(match_list)
+                if strcmp(maskType,'imrect') && isa(A.ply{1,i},'imellipse')
+                    i = i + 1;
+                    continue;
+                end
+                match_list{1,1} = A.ply{1,i};
+            elseif isa(A.ply{1,i},maskType) && ~isempty(match_list)
+                if strcmp(maskType,'imrect') && isa(A.ply{1,i},'imellipse')
+                    i = i + 1;
+                    continue;
+                end
+                match_list = [match_list,A.ply(1,i)]; %#ok<AGROW>
+            end
+            if length(match_list) == mask_num
+                Premask = A.ply{1,i};
+                break
+            end
+            i = i + 1;
+        end
+    end 
+    A.BW = createMask(Premask,F.h);
+    a = get(S.ed(4),'String'); % Get Desired Beginning Frame
+    a = str2num(char(a)); %#ok<ST2NM>
+    b = get(S.ed(5),'String'); % Get Desired Ending Frame
+    b = str2num(char(b)); %#ok<ST2NM>
+    newMask = ~A.BW; % Inverts the selected coordinates from 1 to 0 and vice versa
+    A.newForces = zeros(A.frames,1); 
+    for i = 1:A.frames
+        if ((i >= a) && (i <= b))
+            D.data(:,:,i) = D.data(:,:,i).*newMask; % Multiplies the actual pressure data by the mask to achieve everything outside the mask
+        end
+        A.newForces(i,1) = 0.25 * sum(sum(D.data(:,:,i))) / 10; % Calculate the new forces in Newtons
+    end
+    pb_call_25;
+    set(S.pb(7),'callback',{@pb_call_7,S}); % Give functionality to the Recalculate CoP Data button
+elseif list_val == 1
+    msgbox({'In order to change selected data to zero across the entire data matrix, a mask needs to be selected.';
+        'After changing selected to zero, select "Entire Figure" and hit "Recalculate CoP Data".';% Pop up warning
+        'If you intend to calculate the local  CoP data under a mask, ';
+        'select the desired mask and use the "Calculate Local CoP Data" button.'});
 end
-end
-
-%% This button graphs the MVP data
-function [] = pb_call_17(varargin)
-global S;
-global D;
-global A;
-global F;
-set(0, 'currentfigure', F.fig2); % Make sure the heat map is the current figure
-hold on;
-F.h_MVP = imagesc(A.MVPmat(:,:)); % Graphs the MPP data as a heat map on the figure
-A.curDisplay = -1; %1 for Normal Data, 0 for MPP, -1 for MVP
-colormap(jet); % Set the heat map color scheme to 'Jet'
-colorbar; % Display the color bar on the right side of the map
-highestNum = max(max(max(D.data))); % Use the highest pressure of all the frames to
-caxis([0,highestNum]); % determine the highest number displayed by the color bar and make sure
-set(S.cb(1),'Value',0); % the color scheme is consistent across all frames, then uncheck the Weight Text checkbox for speed purposes
-if isfield(F,'hStrings')
-    delete(F.hStrings);
-end
-Y_cp = A.CoPmat(:,3);
-X_cp = A.CoPmat(:,2);
-set(0, 'currentfigure', F.fig2);
-hold on;
-if S.cb(2).Value == 1
-    F.CoPline = plot(2*Y_cp,2*X_cp,'color','k','LineWidth',2); % Graph the Center of Pressure line on top of the heat map
-end
-set(S.pb(11),'Visible','off')
-set(S.pb(10),'Visible','off')
-set(S.pb(9),'Visible','off')
-set(S.pb(8),'Visible','off')
-set(S.ed(1),'Position',[170 110 50 30])
-set(S.pb(25),'Visible','on')
-set(S.pb(25),'callback',{@pb_call_25,S});
-set(S.pb(14),'Visible','off');
-set(S.pb(19),'Visible','off');
-set(S.pb(26),'Visible','off');
 end
 
 %% This button is to be used after using the Change Selected to Zero button to recalculate and map the Center of Pressure line
 function [] = pb_call_7(varargin)
-global S;
-global D;
-global A;
-global F;
+global S; global D; global A; global F;
 [A.CoPmat] = recalCoP(D.data,A.frames); % Recalculate the Center of Pressure matrix
 delete(F.CoPline); % Delete the old Center of Pressure line
 Y_cp = A.CoPmat(:,3);
@@ -2023,9 +1767,7 @@ end
 
 %% This button is used to regraph the Total Force and Peak Pressure graphs after a mask has been zeroed
 function [] = pb_call_32(varargin)
-global F;
-global A;
-global D;
+global F; global A; global D;
 try
     delete(F.tf);
     F.tf = figure('CloseRequestFcn',@tfClose_call); % Create a separate figure to draw the graph in
@@ -2068,23 +1810,49 @@ else
 end
 end
 
-%% This button exports the newly calculated Center of Pressure Data in a .csv file with the desired name
-function [] = pb_call_18(varargin) %Export New CoP Data
-global S;
-global A;
-exportMat = round([A.newForces,A.CoPmat(:,2),A.CoPmat(:,3)],2); % Round the matrix data to the amount of significant figures displayed in the data file
-fname = get(S.ed(2),'String');
-fname = strcat(get(S.tx(15),'String'),'\',fname,'.csv'); % Extract the desired file name and add .csv to the end
-T=array2table(exportMat,'VariableNames',{'Force_N','Y_pl','X_pl'}); % Turn the data into a table for formatting purposes
-writetable(T,fname); % Write the data to the csv file
-end
-
 %% This button exports the entire Center of Pressure sequence of the masked area in a .csv file with the desired name
 function [] = pb_call_12(varargin)
-global S;
-global A;
-global D;
-global F;
+global S; global A; global D; global F;
+list_str = get(S.pu(1),'String');
+list_val = get(S.pu(1),'Value');
+if (list_len > 1)
+    splt = strsplit(char(list_str(list_val)));
+    mask_shape = splt{1,1};
+    mask_num = str2num(splt{1,2}); %#ok<ST2NM>
+    switch mask_shape
+        case 'Polygon'
+            maskType = 'impoly';
+        case 'Rectangle'
+            maskType = 'imrect';
+        case 'Free_Hand'
+            maskType = 'imfreehand';
+        case 'Ellipse'
+            maskType = 'imellipse';
+    end
+    match_list = {};
+    i = 1;
+    while i <= length(A.ply)
+        if isa(A.ply{1,i},maskType) && isempty(match_list)
+            if strcmp(maskType,'imrect') && isa(A.ply{1,i},'imellipse')
+                i = i + 1;
+                continue;
+            end
+            match_list{1,1} = A.ply{1,i};
+        elseif isa(A.ply{1,i},maskType) && ~isempty(match_list)
+            if strcmp(maskType,'imrect') && isa(A.ply{1,i},'imellipse')
+                i = i + 1;
+                continue;
+            end
+            match_list = [match_list,A.ply(1,i)]; %#ok<AGROW>
+        end
+        if length(match_list) == mask_num
+            Premask = A.ply{1,i};
+            break
+        end
+        i = i + 1;
+    end
+end
+A.BW = createMask(Premask,F.h);
 if A.copCalced_local == 1
     A.maskForces = zeros(A.frames,1);
     for i = 1:A.frames
@@ -2123,6 +1891,16 @@ else
 end
 end
 
+%% This button exports the newly calculated Center of Pressure Data in a .csv file with the desired name
+function [] = pb_call_18(varargin) %Export New CoP Data
+global S; global A;
+exportMat = round([A.newForces,A.CoPmat(:,2),A.CoPmat(:,3)],2); % Round the matrix data to the amount of significant figures displayed in the data file
+fname = get(S.ed(2),'String');
+fname = strcat(get(S.tx(15),'String'),'\',fname,'.csv'); % Extract the desired file name and add .csv to the end
+T=array2table(exportMat,'VariableNames',{'Force_N','Y_pl','X_pl'}); % Turn the data into a table for formatting purposes
+writetable(T,fname); % Write the data to the csv file
+end
+
 %% This button creates a copy of any .csv file Center of Pressure sequence altered to be relative to the Flashing LED
 function [] = pb_call_13(varargin)
 global S;
@@ -2155,69 +1933,68 @@ end
 end
 
 %% Reset GUI
-function [] = pb_call_23(varargin)
-global S;
-global A;
-set(S.sl(1),'value',0.1);
-set(S.ed(6),'Enable','inactive');
-set(S.ed(1),'Enable','inactive');
-set(S.an1,'Visible','off');
-set(S.pb(4),'Visible','off');
-set(S.pb(5),'Visible','off');
-set(S.pb(6),'Visible','off');
-set(S.pb(7),'Visible','off');
-set(S.pb(20),'Visible','off');
-set(S.pb(21),'Visible','off');
-set(S.pb(22),'Visible','off');
-set(S.ed(4),'Visible','off');
-set(S.ed(5),'Visible','off');
-set(S.tx(13),'Visible','off');
-set(S.tx(14),'Visible','off');
-set(S.tx(19),'Visible','off');
-set(S.tx(20),'Visible','off');
-set(S.cb(3),'Visible','off');
-set(S.cb(4),'Visible','off');
-set(S.pb(28),'Visible','off');
-set(S.cb(1),'Enable','inactive');
-set(S.cb(2),'Enable','inactive');
-set(S.cb(3),'Enable','inactive');
-set(S.pb(2),'Enable','inactive');
-set(S.pb(3),'Enable','inactive');
-set(S.pb(16),'Enable','inactive');
-set(S.pb(17),'Enable','inactive');
-set(S.pb(8),'Enable','inactive');
-set(S.pb(9),'Enable','inactive');
-set(S.pb(10),'Enable','inactive');
-set(S.pb(11),'Enable','inactive');
-set(S.pb(14),'Enable','inactive');
-set(S.pb(19),'Enable','inactive');
-set(S.pb(26),'Enable','inactive');
-set(S.sl(1),'Enable','inactive');
-set(S.pu(1),'Visible','off');
-A.polyCoor = {0,0};
-A.ply = {};
-A.polygonNum = 0;
-A.freehandNum = 0;
-A.rectangleNum = 0;
-A.ellipseNum = 0;
-A.playSpeed = 0.1;
-A.playState = true;
-A.copHold = 0;
-A.copCalced_local = 0;
-set(S.tx(18),'Visible','on');
-set(S.tx(15),'String','Directory: ');
-set(S.pb(12),'Visible','off');
-set(S.pb(13),'Visible','off');
-set(S.pb(18),'Visible','off');
-set(S.ed(2),'Visible','off');
-set(S.ed(3),'Visible','off');
-set(S.tx(16),'Visible','on');
-set(S.tx(3),'String','000');
-set(S.tx(12),'String',"File Name: ");
-set(S.ed(1),'String','Frame')
-end
+% function [] = pb_call_23(varargin)
+% global S; global A;
+% set(S.sl(1),'value',0.1);
+% set(S.ed(6),'Enable','inactive');
+% set(S.ed(1),'Enable','inactive');
+% set(S.an1,'Visible','off');
+% set(S.pb(4),'Visible','off');
+% set(S.pb(5),'Visible','off');
+% set(S.pb(6),'Visible','off');
+% set(S.pb(7),'Visible','off');
+% set(S.pb(20),'Visible','off');
+% set(S.pb(21),'Visible','off');
+% set(S.pb(22),'Visible','off');
+% set(S.ed(4),'Visible','off');
+% set(S.ed(5),'Visible','off');
+% set(S.tx(13),'Visible','off');
+% set(S.tx(14),'Visible','off');
+% set(S.tx(19),'Visible','off');
+% set(S.tx(20),'Visible','off');
+% set(S.cb(3),'Visible','off');
+% set(S.cb(4),'Visible','off');
+% set(S.pb(28),'Visible','off');
+% set(S.cb(1),'Enable','inactive');
+% set(S.cb(2),'Enable','inactive');
+% set(S.cb(3),'Enable','inactive');
+% set(S.pb(2),'Enable','inactive');
+% set(S.pb(3),'Enable','inactive');
+% set(S.pb(16),'Enable','inactive');
+% set(S.pb(17),'Enable','inactive');
+% set(S.pb(8),'Enable','inactive');
+% set(S.pb(9),'Enable','inactive');
+% set(S.pb(10),'Enable','inactive');
+% set(S.pb(11),'Enable','inactive');
+% set(S.pb(14),'Enable','inactive');
+% set(S.pb(19),'Enable','inactive');
+% set(S.pb(26),'Enable','inactive');
+% set(S.sl(1),'Enable','inactive');
+% set(S.pu(1),'Visible','off');
+% A.polyCoor = {0,0};
+% A.ply = {};
+% A.polygonNum = 0;
+% A.freehandNum = 0;
+% A.rectangleNum = 0;
+% A.ellipseNum = 0;
+% A.playSpeed = 0.1;
+% A.playState = true;
+% A.copHold = 0;
+% A.copCalced_local = 0;
+% set(S.tx(18),'Visible','on');
+% set(S.tx(15),'String','Directory: ');
+% set(S.pb(12),'Visible','off');
+% set(S.pb(13),'Visible','off');
+% set(S.pb(18),'Visible','off');
+% set(S.ed(2),'Visible','off');
+% set(S.ed(3),'Visible','off');
+% set(S.tx(16),'Visible','on');
+% set(S.tx(3),'String','000');
+% set(S.tx(12),'String',"File Name: ");
+% set(S.ed(1),'String','Frame')
+% end
 
 %% Save Session
-function [] = pb_call_24(varargin)
-
-end
+% function [] = pb_call_24(varargin)
+% 
+% end
