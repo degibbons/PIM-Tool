@@ -12,3 +12,5 @@ For further information on use and application, please refer to the PIM_HelpGuid
 Please keep all files from this repository in the same directory. 
 Data files may be located elsewhere.
 Exported files may also be placed elsewhere.
+
+https://doi.org/10.5281/zenodo.3895262
