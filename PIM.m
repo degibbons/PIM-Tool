@@ -32,7 +32,7 @@ S.tx(1) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fh,'Color'
     'Position',[175 520 150 60],'Fontsize',19,'String',{'P.I.M. Tool','---------------'},...
     'Fontweight','bold'); % Title
 S.tx(13) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fh,'Color'),...
-    'Position',[290 480 55 40],'Fontsize',12,'String','v1.02'); % Version Number
+    'Position',[290 480 55 40],'Fontsize',12,'String','v1.0.2'); % Version Number
 S.an2 = annotation('rectangle',[0.33 0.85 0.33 0.12]); % Box Around Title
 
 % Data Extract and Visualization Section
