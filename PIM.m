@@ -32,7 +32,7 @@ S.tx(1) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fh,'Color'
     'Position',[175 520 150 60],'Fontsize',19,'String',{'P.I.M. Tool','---------------'},...
     'Fontweight','bold'); % Title
 S.tx(13) = uicontrol('Style','Text','Unit','Pixels','Background',get(S.fh,'Color'),...
-    'Position',[290 480 55 40],'Fontsize',12,'String','v1.0.2'); % Version Number
+    'Position',[290 480 55 40],'Fontsize',12,'String','v1.1.0'); % Version Number
 S.an2 = annotation('rectangle',[0.33 0.85 0.33 0.12]); % Box Around Title
 
 % Data Extract and Visualization Section
@@ -513,7 +513,7 @@ set(0, 'currentfigure', F.fig2); % Make sure the heat map is the current figure
 hold on;
 F.h_MPP = imagesc(A.MPPmat(:,:)); % Graphs the MPP data as a heat map on the figure
 A.curDisplay = 0; %1 for Normal Data, 0 for MPP, -1 for MVP
-colormap(jet); % Set the heat map color scheme to 'Jet'
+colormap(parula); % Set the heat map color scheme to 'Parula'
 colorbar; % Display the color bar on the right side of the map
 highestNum = max(max(max(D.data))); % Use the highest pressure of all the frames to
 caxis([0,highestNum]); % determine the highest number displayed by the color bar and make sure
@@ -547,7 +547,7 @@ set(0, 'currentfigure', F.fig2); % Make sure the heat map is the current figure
 hold on;
 F.h_MVP = imagesc(A.MVPmat(:,:)); % Graphs the MPP data as a heat map on the figure
 A.curDisplay = -1; %1 for Normal Data, 0 for MPP, -1 for MVP
-colormap(jet); % Set the heat map color scheme to 'Jet'
+colormap(parula); % Set the heat map color scheme to 'Parula'
 colorbar; % Display the color bar on the right side of the map
 highestNum = max(max(max(D.data))); % Use the highest pressure of all the frames to
 caxis([0,highestNum]); % determine the highest number displayed by the color bar and make sure
@@ -1815,6 +1815,7 @@ function [] = pb_call_12(varargin)
 global S; global A; global D; global F;
 list_str = get(S.pu(1),'String');
 list_val = get(S.pu(1),'Value');
+list_len = length(list_str); %Added NET 11-21-2025
 if (list_len > 1)
     splt = strsplit(char(list_str(list_val)));
     mask_shape = splt{1,1};
@@ -1855,30 +1856,37 @@ end
 A.BW = createMask(Premask,F.h);
 if A.copCalced_local == 1
     A.maskForces = zeros(A.frames,1);
+    A.AvgPressure = zeros(A.frames,1);
+    A.MaxPressure = zeros(A.frames,1);
+    A.SurfaceArea = zeros(A.frames,1);
     for i = 1:A.frames
         tempData = D.data(:,:,i);
-        A.maskForces(i,1) = 0.25 * sum(sum(tempData(A.BW==1))) / 10;
+        maskedValues = tempData(A.BW==1);
+        A.maskForces(i,1) = 0.25 * sum(sum(maskedValues)) / 10;
+        A.AvgPressure(i,1) = mean(maskedValues(maskedValues ~= 0));
+        A.MaxPressure(i,1) = max(maskedValues);
+        A.SurfaceArea(i,1) = 0.25 * nnz(maskedValues);
     end
     begFrame = str2num(char(get(S.ed(4),'String'))); %#ok<ST2NM>
     endFrame = str2num(char(get(S.ed(5),'String'))); %#ok<ST2NM>
     tempMat = zeros(A.frames,5);
     for w = begFrame:endFrame
-        for x = 1:3
+        for x = 1:6
             tempMat(w,x) = 1;
         end
     end
     for y = 1:A.frames
-        for z = 2:3
+        for z = 2:6
             if tempMat(y,z) == 0
                 tempMat(y,z) = NaN;
             end
         end
     end
-    exportMat = [A.maskForces(:,1),A.CoPsequence(:,2),A.CoPsequence(:,3)]; % Assign data to usable matrix
-    exportMat = exportMat .* tempMat(:,1:3);
+    exportMat = [A.maskForces(:,1),A.CoPsequence(:,2),A.CoPsequence(:,3),A.AvgPressure(:,1),A.MaxPressure(:,1),A.SurfaceArea(:,1)]; % Assign data to usable matrix
+    exportMat = exportMat .* tempMat(:,1:6);
     fname = get(S.ed(3),'String');
     fname = strcat(get(S.tx(15),'String'),'\',fname,'.csv'); % Extract the desired file name and add .csv to the end
-    T=array2table(exportMat,'VariableNames',{'Force_N','Y_pl','X_pl'}); % Turn the data into a table for formatting purposes
+    T=array2table(exportMat,'VariableNames',{'Force_N','Y_pl','X_pl','Ave_Pressure','Max_Pressure','Surface_Area'}); % Turn the data into a table for formatting purposes
     writetable(T,fname); % Write the data to the csv file
 else
     beep;
