@@ -15,11 +15,16 @@ while i < fileLength-2 %While the end of the file has not been reached
         i = i+1; %Increment the current index by 1
         for y = y1:y2 %Increment across each row
             for x = x1:x2 %Increment along each element in each row (column)
-                [num,i] = readTill(filecontent,i,9); %Read each number, stopping at a Horizontal Tab
+                if x == x2
+                    [num,i] = readTill(filecontent,i,13); %Read each number, stopping at a New Line Feed
+                else
+                    [num,i] = readTill(filecontent,i,9); %Read each number, stopping at a Horizontal Tab
+                end
                 if num == 32 %If the number is a space (blank)
                     num = 48; %Replace it with a zero 
                 end
                 MPPmat(y,x) = str2num(char(num)); %Set the read number in the appropriate index in the MPP matrix
+                % [num,i] = readTill(filecontent,i,9); %Read each number, stopping at a Horizontal Tab
                 i = i+1; %Then increment the index by one and repeat across the row
             end
             [~,i] = readTill(filecontent,i,10); %Increment the index until a New Line Feed is reached

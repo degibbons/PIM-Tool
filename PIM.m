@@ -24,7 +24,7 @@ close force all;
 global S;
 %% Image Controller Initialization
 S.fh = figure('Units','Pixels','Position',[10 100 500 600],...
-    'Name','Image Controller','MenuBar','None','Resize','off'); % Create Image Controller Figure
+    'Name','Image Controller','MenuBar','None','Resize','off','CloseRequestFcn', @cleanClose); % Create Image Controller Figure
 
 % Title and Version Number
 figure(S.fh) % Shift Focuse to Image Controller Figure
@@ -1939,7 +1939,11 @@ else
     end
 end
 end
-
+%% Close Function
+function cleanClose(varargin)
+clearvars -global
+close all force
+end
 %% Reset GUI
 % function [] = pb_call_23(varargin)
 % global S; global A;
