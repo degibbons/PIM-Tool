@@ -20,6 +20,7 @@ while i < fileLength-2 %While the end of the file has not been reached
                 else
                     [num,i] = readTill(filecontent,i,9); %Read each number, stopping at a Horizontal Tab
                 end
+                num(num==9)=[];
                 if num == 32 %If the number is a space (blank)
                     num = 48; %Replace it with a zero 
                 end
